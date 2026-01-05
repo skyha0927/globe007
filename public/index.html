@@ -19,60 +19,80 @@ body {
   align-items: center;
   min-height:100vh;
   margin:0;
-  padding: 10px; /* 전체 앱 주변 여백 조금 줄임 (화면 활용 최대화) */
+  padding: 10px; /* 전체 앱 주변 여백 */
   box-sizing: border-box;
-  font-size: 1.2rem; /* 기본 글씨 크기 더 크게 확대 */
+  font-size: 1.3rem; /* 기본 글씨 크기 더 크게 확대 (카톡 느낌) */
   -webkit-text-size-adjust: 100%; /* iOS Safari 텍스트 크기 자동 조절 방지 */
 }
 .app {
   width:100%;
-  max-width: 600px;
+  max-width: 650px; /* 스마트폰에서 옆으로 조금 더 키움 */
   background:#020617;
   border-radius:12px;
-  padding:20px; /* 앱 내부 패딩 증가 */
+  padding:25px; /* 앱 내부 패딩 증가 */
   display:flex;
   flex-direction: column;
   min-height: 95vh; /* 화면 높이를 더 많이 사용 */
-  box-shadow: 0 0 20px rgba(0,0,0,0.5);
-  box-sizing: border-box; /* 패딩이 너비/높이에 포함되도록 */
+  box-shadow: 0 0 25px rgba(0,0,0,0.6); /* 그림자도 좀 더 진하게 */
+  box-sizing: border-box;
 }
 #messages {
   flex-grow: 1;
   overflow-y:auto;
   border:1px solid #1e293b;
-  padding:15px; /* 메시지 영역 내부 패딩 증가 */
-  margin-bottom:15px; /* 메시지 영역 하단 마진 증가 */
-  border-radius:8px; /* 모서리 더 둥글게 */
+  padding:18px; /* 메시지 영역 내부 패딩 증가 */
+  margin-bottom:18px; /* 메시지 영역 하단 마진 증가 */
+  border-radius:10px; /* 모서리 더 둥글게 */
   word-wrap: break-word;
-  line-height: 1.6; /* 메시지 줄 간격 더 넓게 */
-  font-size: 1.1rem; /* 메시지 글씨 크기 */
+  line-height: 1.7; /* 메시지 줄 간격 더 넓게 */
+  font-size: 1.2rem; /* 메시지 글씨 크기 (body보다 약간 작게) */
+
+  display: flex;
+  flex-direction: column-reverse; /* 메시지 아래에서 위로 쌓이게 */
+  justify-content: flex-start; /* 메시지가 시작 지점(바닥)에 정렬 */
 }
 .msg {
-  margin-bottom:12px; /* 메시지 간격 더 넓게 */
-  padding: 8px; /* 메시지별 패딩 추가 (터치 영역 확보) */
+  margin-top:15px; /* 메시지 간격 더 넓게 (column-reverse이므로 margin-top) */
+  padding: 10px 12px; /* 메시지별 패딩 추가 (터치 영역 확보) */
   cursor: pointer;
-  border-radius: 6px;
+  border-radius: 8px;
   transition: background-color 0.1s ease;
+  flex-shrink: 0;
+  background-color: #2d3748; /* 메시지 배경색 추가 */
+}
+.msg:first-child { /* column-reverse 에서는 가장 아래 메시지가 첫 번째 자식 */
+  margin-top: 0; /* 가장 아래 메시지 위쪽 마진 제거 */
 }
 .msg:hover {
-  background-color: #1e293b;
+  background-color: #3f4d62; /* 호버 시 색상 변경 */
 }
 .my-message {
   font-weight: bold;
-  color: #38bdf8;
-  background-color: rgba(56, 189, 248, 0.1); /* 본인 메시지 배경색도 살짝 다르게 */
+  color: #a7f3d0; /* 본인 메시지 색상 변경 */
+  background-color: #1a4d33; /* 본인 메시지 배경색도 다르게 */
+  text-align: right; /* 본인 메시지는 오른쪽 정렬 */
+  margin-left: auto; /* 본인 메시지를 오른쪽으로 밀기 */
+  max-width: 85%; /* 본인 메시지 최대 너비 제한 */
+  border-bottom-right-radius: 0; /* 말풍선 모양처럼 모서리 조정 */
 }
+.my-message b {
+  color: #a7f3d0; /* 본인 메시지 이름 색상 */
+}
+.msg b { /* 다른 사용자 메시지 이름 색상 */
+  color: #38bdf8;
+}
+
 input, button {
-  width:calc(100% - 20px); /* 패딩 고려해서 너비 조정 */
-  margin-top:10px; /* 요소들 간의 간격 증가 */
-  padding:15px; /* 입력 필드 및 버튼 패딩 대폭 확대 (터치 영역) */
-  border-radius:8px; /* 모서리 더 둥글게 */
+  width:calc(100% - 24px); /* 패딩 고려해서 너비 조정 */
+  margin-top:12px; /* 요소들 간의 간격 증가 */
+  padding:18px; /* 입력 필드 및 버튼 패딩 대폭 확대 (터치 영역) */
+  border-radius:10px; /* 모서리 더 둥글게 */
   border:1px solid #1e293b;
   background-color: #0f172a;
   color: white;
-  font-size: 1.1rem; /* 입력 필드 및 버튼 글씨 크기 */
-  box-sizing: border-box; /* 패딩이 너비/높이에 포함되도록 */
-  min-height: 50px; /* 최소 높이 설정으로 터치하기 더 쉽게 */
+  font-size: 1.2rem; /* 입력 필드 및 버튼 글씨 크기 */
+  box-sizing: border-box;
+  min-height: 55px; /* 최소 높이 설정으로 터치하기 더 쉽게 */
 }
 input::placeholder {
     color: #94a3b8;
@@ -82,30 +102,40 @@ button {
   cursor:pointer;
   font-weight: bold;
   transition: background-color 0.2s;
-  font-size: 1.2rem; /* 버튼 글씨 크기 더 크게 */
+  font-size: 1.3rem; /* 버튼 글씨 크기 더 크게 */
 }
 button:hover {
   background:#0ea5e9;
 }
 
-/* 스마트폰 세로 모드에 대한 추가 조정 */
+/* 스마트폰 세로 모드에 대한 추가 조정 (미디어 쿼리) */
 @media (max-width: 768px) {
   .app {
     border-radius: 0; /* 모바일에서는 모서리 둥글게 안 해도 됨 */
     padding: 15px;
     min-height: 100vh; /* 모바일에서는 전체 화면 높이 사용 */
+    max-width: 100%; /* 모바일에서는 너비 꽉 채우기 */
   }
   body {
     padding: 0; /* 모바일에서는 body 패딩 제거 */
-    font-size: 1.1rem; /* 모바일에서는 기본 글씨 크기를 약간 줄여 더 많은 정보가 보이게 */
+    font-size: 1.2rem; /* 모바일에서는 기본 글씨 크기 */
   }
   #messages {
-    font-size: 1rem; /* 메시지 글씨 크기도 약간 줄임 */
+    font-size: 1.1rem; /* 메시지 글씨 크기 */
+    padding: 12px;
+    margin-bottom: 12px;
+    border-radius: 8px;
+  }
+  .msg {
+    margin-top: 10px;
+    padding: 8px 10px;
   }
   input, button {
-    font-size: 1.1rem; /* 모바일에서 입력/버튼 글씨 크기 */
-    padding: 12px; /* 모바일에서 입력/버튼 패딩 */
-    min-height: 48px; /* 모바일에서 최소 높이 */
+    font-size: 1.1rem;
+    padding: 15px;
+    min-height: 50px;
+    margin-top: 10px;
+    border-radius: 8px;
   }
 }
 </style>
@@ -137,39 +167,68 @@ button:hover {
   const nameInput = document.getElementById("name");
   const textInput = document.getElementById("text");
 
+  // 클라이언트 고유 ID (로컬 저장소에 저장)
   let clientId = localStorage.getItem('chatClientId');
   if (!clientId) {
-    clientId = uuid.v4();
+    clientId = uuid.v4(); // UUID 라이브러리를 사용하여 고유 ID 생성
     localStorage.setItem('chatClientId', clientId);
   }
 
+  // 저장된 이름 불러오기
   let storedName = localStorage.getItem('chatName');
   if (storedName) {
     nameInput.value = storedName;
   }
 
+  // 실시간 메시지 업데이트 리스너
   db.collection("messages")
-    .orderBy("time")
+    .orderBy("time", "asc") // 모든 메시지를 오래된 것부터 가져오기
     .onSnapshot(snapshot => {
-      messagesDiv.innerHTML = "";
-      snapshot.forEach(doc => {
+      // 스크롤 위치를 유지하기 위한 로직
+      // column-reverse이므로 messagesDiv.scrollTop이 0에 가까우면 맨 아래를 보고 있는 것
+      const isScrolledToBottom = messagesDiv.scrollTop < 20; // 20px 오차 허용
+
+      // 메시지 내용 업데이트 전 현재 스크롤 높이와 클라이언트 높이 기록
+      const oldScrollHeight = messagesDiv.scrollHeight;
+      const oldScrollTop = messagesDiv.scrollTop;
+
+      messagesDiv.innerHTML = ""; // 메시지 목록 비우기
+      
+      // snapshot.docs.reverse().forEach(...) 대신,
+      // Firebase 쿼리에서 `orderBy("time", "asc")`로 가져온 순서대로 `innerHTML`에 추가하고,
+      // `flex-direction: column-reverse` CSS 스타일 덕분에 최신 메시지가 아래에 표시됩니다.
+      snapshot.docs.forEach(doc => {
         const m = doc.data();
         const docId = doc.id;
         let messageHtml = `<div class="msg" data-docid="${docId}" data-clientid="${m.clientId}"><b>${m.name}</b>: ${m.text}</div>`;
 
+        // 본인 메시지인 경우 스타일 및 삭제 기능 추가
         if (m.clientId === clientId) {
-          messageHtml = `<div class="msg my-message" data-docid="${docId}" data-clientid="${m.clientId}"><b>${m.name}</b>: ${m.text} (클릭하여 삭제)</div>`;
+          messageHtml = `<div class="msg my-message" data-docid="${docId}" data-clientid="${m.clientId}"><b>${m.name}</b>: ${m.text}</div>`;
         }
         messagesDiv.innerHTML += messageHtml;
       });
-      messagesDiv.scrollTop = messagesDiv.scrollHeight;
 
+      // 새로운 메시지 내용이 렌더링된 후 스크롤 조정
+      const newScrollHeight = messagesDiv.scrollHeight;
+
+      if (isScrolledToBottom) {
+        // 사용자가 맨 아래를 보고 있었다면, 맨 아래로 스크롤
+        messagesDiv.scrollTop = 0;
+      } else {
+        // 사용자가 위로 스크롤해서 과거 메시지를 보고 있었다면, 스크롤 위치를 유지
+        // 새로운 콘텐츠가 "맨 위" (시각적으로는 메시지 목록의 "처음" 부분)에 추가되었으므로,
+        // 스크롤 높이의 변화량만큼 scrollTop을 조절하여 시각적인 위치를 유지합니다.
+        messagesDiv.scrollTop = oldScrollTop + (newScrollHeight - oldScrollHeight);
+      }
+      
+      // 메시지 클릭 이벤트 리스너 다시 설정 (innerHTML = "" 때문에 매번 다시 설정해야 함)
       messagesDiv.querySelectorAll('.msg').forEach(messageElement => {
         messageElement.onclick = function() {
           const messageClientId = this.getAttribute('data-clientid');
           const messageDocId = this.getAttribute('data-docid');
 
-          if (messageClientId === clientId) {
+          if (messageClientId === clientId) { // 현재 브라우저의 클라이언트 ID와 메시지의 클라이언트 ID가 같으면
             if (confirm("정말로 이 메시지를 삭제하시겠습니까?")) {
               db.collection("messages").doc(messageDocId).delete()
                 .then(() => {
@@ -180,11 +239,14 @@ button:hover {
                   alert("메시지 삭제 중 오류가 발생했습니다.");
                 });
             }
+          } else {
+            console.log("본인 메시지만 삭제할 수 있습니다.");
           }
         };
       });
     });
 
+  // 메시지 전송 함수
   function send() {
     const name = nameInput.value.trim();
     const text = textInput.value.trim();
@@ -193,8 +255,10 @@ button:hover {
         return;
     }
 
+    // 로컬 저장소에 현재 이름 저장
     localStorage.setItem('chatName', name);
 
+    // Firestore에 메시지 추가
     db.collection("messages").add({
       name,
       text,
@@ -202,7 +266,7 @@ button:hover {
       clientId: clientId
     });
 
-    textInput.value = "";
+    textInput.value = ""; // 메시지 입력 필드 초기화
   }
 </script>
 </body>
