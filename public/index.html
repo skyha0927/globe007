@@ -7,7 +7,7 @@
 <!-- Firebase (compat) -->
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/uuid/8.3.2/uuid.min.js"></script> <!-- UUID 라이브러리 추가 -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/uuid/8.3.2/uuid.min.js"></script>
 
 <style>
 body {
@@ -16,65 +16,69 @@ body {
   font-family:sans-serif;
   display:flex;
   justify-content:center;
-  align-items: center; /* 세로 중앙 정렬 */
-  min-height:100vh; /* 전체 화면 높이 사용 */
-  margin:0; /* 기본 마진 제거 */
-  padding: 15px; /* 작은 화면에서 여백 확보 */
-  box-sizing: border-box; /* 패딩이 너비에 포함되도록 설정 */
+  align-items: center;
+  min-height:100vh;
+  margin:0;
+  padding: 15px;
+  box-sizing: border-box;
+  font-size: 1.1rem; /* 기본 글씨 크기 확대 */
 }
 .app {
-  width:100%; /* 너비 100%로 설정 */
-  max-width: 600px; /* 최대 너비 설정 (PC 등 큰 화면에서 너무 넓어지는 것 방지) */
+  width:100%;
+  max-width: 600px;
   background:#020617;
   border-radius:12px;
   padding:15px;
-  display:flex; /* 내부 요소를 flexbox로 배치 */
-  flex-direction: column; /* 세로 방향으로 정렬 */
-  min-height: 80vh; /* 최소 높이 설정 */
-  box-shadow: 0 0 20px rgba(0,0,0,0.5); /* 그림자 효과 추가 */
+  display:flex;
+  flex-direction: column;
+  min-height: 80vh;
+  box-shadow: 0 0 20px rgba(0,0,0,0.5);
 }
 #messages {
-  flex-grow: 1; /* 남은 공간을 모두 채우도록 설정 */
+  flex-grow: 1;
   overflow-y:auto;
   border:1px solid #1e293b;
   padding:10px;
   margin-bottom:10px;
   border-radius:6px;
-  word-wrap: break-word; /* 긴 단어 자동 줄바꿈 */
+  word-wrap: break-word;
 }
 .msg {
-  margin-bottom:6px;
+  margin-bottom:8px; /* 메시지 간격도 조금 늘려 시원하게 */
   padding: 4px 0;
-  cursor: pointer; /* 클릭 가능하다는 시각적 표시 */
+  cursor: pointer;
+  line-height: 1.5; /* 줄 간격도 보기 좋게 조정 */
 }
 .msg:hover {
-  background-color: #1e293b; /* 마우스 오버 시 배경색 변경 */
+  background-color: #1e293b;
   border-radius: 4px;
 }
 .my-message {
   font-weight: bold;
-  color: #38bdf8; /* 본인 메시지 강조 색상 */
+  color: #38bdf8;
 }
 input, button {
-  width:calc(100% - 16px); /* 패딩 고려 */
-  margin-top:5px;
-  padding:8px;
+  width:calc(100% - 16px);
+  margin-top:8px; /* 입력 필드 및 버튼 간격도 조정 */
+  padding:10px; /* 입력 필드 및 버튼 패딩 확대 */
   border-radius:6px;
-  border:1px solid #1e293b; /* 테두리 추가 */
-  background-color: #0f172a; /* 입력 필드 배경색 */
-  color: white; /* 입력 필드 텍스트 색상 */
+  border:1px solid #1e293b;
+  background-color: #0f172a;
+  color: white;
+  font-size: 1rem; /* 입력 필드 및 버튼 글씨 크기 */
 }
 input::placeholder {
-    color: #94a3b8; /* 플레이스홀더 색상 */
+    color: #94a3b8;
 }
 button {
   background:#38bdf8;
   cursor:pointer;
   font-weight: bold;
-  transition: background-color 0.2s; /* 부드러운 전환 효과 */
+  transition: background-color 0.2s;
+  font-size: 1.1rem; /* 버튼 글씨 크기 조금 더 크게 */
 }
 button:hover {
-  background:#0ea5e9; /* 호버 시 색상 변경 */
+  background:#0ea5e9;
 }
 </style>
 </head>
@@ -105,10 +109,9 @@ button:hover {
   const nameInput = document.getElementById("name");
   const textInput = document.getElementById("text");
 
-  // 1. 이름 유지: 로컬 저장소에서 이름을 불러오거나 새 클라이언트 ID 생성
   let clientId = localStorage.getItem('chatClientId');
   if (!clientId) {
-    clientId = uuid.v4(); // UUID 라이브러리를 사용하여 고유 ID 생성
+    clientId = uuid.v4();
     localStorage.setItem('chatClientId', clientId);
   }
 
@@ -117,32 +120,28 @@ button:hover {
     nameInput.value = storedName;
   }
 
-  // 실시간 전체톡방
   db.collection("messages")
     .orderBy("time")
     .onSnapshot(snapshot => {
       messagesDiv.innerHTML = "";
       snapshot.forEach(doc => {
         const m = doc.data();
-        const docId = doc.id; // 문서 ID를 가져와 삭제에 사용
-        let messageClass = "msg";
-        let messageHtml = `<div class="${messageClass}" data-docid="${docId}" data-clientid="${m.clientId}"><b>${m.name}</b>: ${m.text}</div>`;
+        const docId = doc.id;
+        let messageHtml = `<div class="msg" data-docid="${docId}" data-clientid="${m.clientId}"><b>${m.name}</b>: ${m.text}</div>`;
 
-        // 3. 본인 메시지 삭제 기능: 클라이언트 ID가 같으면 본인 메시지로 표시 및 클릭 이벤트 추가
         if (m.clientId === clientId) {
-          messageHtml = `<div class="${messageClass} my-message" data-docid="${docId}" data-clientid="${m.clientId}"><b>${m.name}</b>: ${m.text} (클릭하여 삭제)</div>`;
+          messageHtml = `<div class="msg my-message" data-docid="${docId}" data-clientid="${m.clientId}"><b>${m.name}</b>: ${m.text} (클릭하여 삭제)</div>`;
         }
         messagesDiv.innerHTML += messageHtml;
       });
       messagesDiv.scrollTop = messagesDiv.scrollHeight;
 
-      // 메시지 div에 클릭 이벤트 리스너 추가 (이벤트 위임)
       messagesDiv.querySelectorAll('.msg').forEach(messageElement => {
         messageElement.onclick = function() {
           const messageClientId = this.getAttribute('data-clientid');
           const messageDocId = this.getAttribute('data-docid');
 
-          if (messageClientId === clientId) { // 현재 브라우저의 클라이언트 ID와 메시지의 클라이언트 ID가 같으면
+          if (messageClientId === clientId) {
             if (confirm("정말로 이 메시지를 삭제하시겠습니까?")) {
               db.collection("messages").doc(messageDocId).delete()
                 .then(() => {
@@ -153,9 +152,6 @@ button:hover {
                   alert("메시지 삭제 중 오류가 발생했습니다.");
                 });
             }
-          } else {
-            // 본인 메시지가 아닐 경우 아무 동작도 하지 않음
-            console.log("본인 메시지만 삭제할 수 있습니다.");
           }
         };
       });
@@ -169,14 +165,13 @@ button:hover {
         return;
     }
 
-    // 1. 이름 유지: 로컬 저장소에 현재 이름을 저장
     localStorage.setItem('chatName', name);
 
     db.collection("messages").add({
       name,
       text,
       time: firebase.firestore.FieldValue.serverTimestamp(),
-      clientId: clientId // 3. 본인 메시지 삭제 기능: 메시지를 보낼 때 클라이언트 ID 함께 저장
+      clientId: clientId
     });
 
     textInput.value = "";
