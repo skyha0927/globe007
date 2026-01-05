@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<title>전체 톡방</title>
+
+<!-- Firebase (compat) -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+
+<style>
+body {
+  background:#0f172a;
+  color:white;
+  font-family:sans-serif;
+  display:flex;
+  justify-content:center;
+  padding-top:30px;
+}
+.app {
+  width:360px;
+  background:#020617;
+  border-radius:12px;
+  padding:15px;
+}
+#messages {
+  height:320px;
+  overflow-y:auto;
+  border:1px solid #1e293b;
+  padding:10px;
+  margin-bottom:10px;
+}
+.msg {
+  margin-bottom:6px;
+}
+input, button {
+  width:100%;
+  margin-top:5px;
+  padding:8px;
+  border-radius:6px;
+  border:none;
+}
+button {
+  background:#38bdf8;
+  cursor:pointer;
+}
+</style>
+</head>
+
+<body>
+<div class="app">
+  <input id="name" placeholder="이름">
+  <div id="messages"></div>
+  <input id="text" placeholder="메시지">
+  <button onclick="send()">전송</button>
+</div>
+
+<script>
+  // Firebase 설정 (네가 준 거 그대로)
+  const firebaseConfig = {
+    apiKey: "AIzaSyDGhqeGmPS_0Yvl5cef_I6N8wCogbv__to",
+    authDomain: "globe007.firebaseapp.com",
+    projectId: "globe007",
+    storageBucket: "globe007.firebasestorage.app",
+    messagingSenderId: "518758558092",
+    appId: "1:518758558092:web:0393c788a78974bc21cea9"
+  };
+
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.firestore();
+
+  const messagesDiv = document.getElementById("messages");
+
+  // 실시간 전체톡방
+  db.collection("messages")
+    .orderBy("time")
+    .onSnapshot(snapshot => {
+      messagesDiv.innerHTML = "";
+      snapshot.forEach(doc => {
+        const m = doc.data();
+        messagesDiv.innerHTML +=
+          `<div class="msg"><b>${m.name}</b>: ${m.text}</div>`;
+      });
+      messagesDiv.scrollTop = messagesDiv.scrollHeight;
+    });
+
+  function send() {
+    const name = document.getElementById("name").value;
+    const text = document.getElementById("text").value;
+    if (!name || !text) return;
+
+    db.collection("messages").add({
+      name,
+      text,
+      time: firebase.firestore.FieldValue.serverTimestamp()
+    });
+
+    document.getElementById("text").value = "";
+  }
+</script>
+</body>
+</html>
