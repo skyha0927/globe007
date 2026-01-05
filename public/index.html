@@ -7,6 +7,7 @@
 <!-- Firebase (compat) -->
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/uuid/8.3.2/uuid.min.js"></script> <!-- UUID 라이브러리 추가 -->
 
 <style>
 body {
@@ -15,48 +16,79 @@ body {
   font-family:sans-serif;
   display:flex;
   justify-content:center;
-  padding-top:30px;
+  align-items: center; /* 세로 중앙 정렬 */
+  min-height:100vh; /* 전체 화면 높이 사용 */
+  margin:0; /* 기본 마진 제거 */
+  padding: 15px; /* 작은 화면에서 여백 확보 */
+  box-sizing: border-box; /* 패딩이 너비에 포함되도록 설정 */
 }
 .app {
-  width:360px;
+  width:100%; /* 너비 100%로 설정 */
+  max-width: 600px; /* 최대 너비 설정 (PC 등 큰 화면에서 너무 넓어지는 것 방지) */
   background:#020617;
   border-radius:12px;
   padding:15px;
+  display:flex; /* 내부 요소를 flexbox로 배치 */
+  flex-direction: column; /* 세로 방향으로 정렬 */
+  min-height: 80vh; /* 최소 높이 설정 */
+  box-shadow: 0 0 20px rgba(0,0,0,0.5); /* 그림자 효과 추가 */
 }
 #messages {
-  height:320px;
+  flex-grow: 1; /* 남은 공간을 모두 채우도록 설정 */
   overflow-y:auto;
   border:1px solid #1e293b;
   padding:10px;
   margin-bottom:10px;
+  border-radius:6px;
+  word-wrap: break-word; /* 긴 단어 자동 줄바꿈 */
 }
 .msg {
   margin-bottom:6px;
+  padding: 4px 0;
+  cursor: pointer; /* 클릭 가능하다는 시각적 표시 */
+}
+.msg:hover {
+  background-color: #1e293b; /* 마우스 오버 시 배경색 변경 */
+  border-radius: 4px;
+}
+.my-message {
+  font-weight: bold;
+  color: #38bdf8; /* 본인 메시지 강조 색상 */
 }
 input, button {
-  width:100%;
+  width:calc(100% - 16px); /* 패딩 고려 */
   margin-top:5px;
   padding:8px;
   border-radius:6px;
-  border:none;
+  border:1px solid #1e293b; /* 테두리 추가 */
+  background-color: #0f172a; /* 입력 필드 배경색 */
+  color: white; /* 입력 필드 텍스트 색상 */
+}
+input::placeholder {
+    color: #94a3b8; /* 플레이스홀더 색상 */
 }
 button {
   background:#38bdf8;
   cursor:pointer;
+  font-weight: bold;
+  transition: background-color 0.2s; /* 부드러운 전환 효과 */
+}
+button:hover {
+  background:#0ea5e9; /* 호버 시 색상 변경 */
 }
 </style>
 </head>
 
 <body>
 <div class="app">
-  <input id="name" placeholder="이름">
+  <input id="name" placeholder="이름을 입력하세요">
   <div id="messages"></div>
-  <input id="text" placeholder="메시지">
+  <input id="text" placeholder="메시지를 입력하세요">
   <button onclick="send()">전송</button>
 </div>
 
 <script>
-  // Firebase 설정 (네가 준 거 그대로)
+  // Firebase 설정 (기존과 동일)
   const firebaseConfig = {
     apiKey: "AIzaSyDGhqeGmPS_0Yvl5cef_I6N8wCogbv__to",
     authDomain: "globe007.firebaseapp.com",
@@ -70,6 +102,20 @@ button {
   const db = firebase.firestore();
 
   const messagesDiv = document.getElementById("messages");
+  const nameInput = document.getElementById("name");
+  const textInput = document.getElementById("text");
+
+  // 1. 이름 유지: 로컬 저장소에서 이름을 불러오거나 새 클라이언트 ID 생성
+  let clientId = localStorage.getItem('chatClientId');
+  if (!clientId) {
+    clientId = uuid.v4(); // UUID 라이브러리를 사용하여 고유 ID 생성
+    localStorage.setItem('chatClientId', clientId);
+  }
+
+  let storedName = localStorage.getItem('chatName');
+  if (storedName) {
+    nameInput.value = storedName;
+  }
 
   // 실시간 전체톡방
   db.collection("messages")
@@ -78,24 +124,62 @@ button {
       messagesDiv.innerHTML = "";
       snapshot.forEach(doc => {
         const m = doc.data();
-        messagesDiv.innerHTML +=
-          `<div class="msg"><b>${m.name}</b>: ${m.text}</div>`;
+        const docId = doc.id; // 문서 ID를 가져와 삭제에 사용
+        let messageClass = "msg";
+        let messageHtml = `<div class="${messageClass}" data-docid="${docId}" data-clientid="${m.clientId}"><b>${m.name}</b>: ${m.text}</div>`;
+
+        // 3. 본인 메시지 삭제 기능: 클라이언트 ID가 같으면 본인 메시지로 표시 및 클릭 이벤트 추가
+        if (m.clientId === clientId) {
+          messageHtml = `<div class="${messageClass} my-message" data-docid="${docId}" data-clientid="${m.clientId}"><b>${m.name}</b>: ${m.text} (클릭하여 삭제)</div>`;
+        }
+        messagesDiv.innerHTML += messageHtml;
       });
       messagesDiv.scrollTop = messagesDiv.scrollHeight;
+
+      // 메시지 div에 클릭 이벤트 리스너 추가 (이벤트 위임)
+      messagesDiv.querySelectorAll('.msg').forEach(messageElement => {
+        messageElement.onclick = function() {
+          const messageClientId = this.getAttribute('data-clientid');
+          const messageDocId = this.getAttribute('data-docid');
+
+          if (messageClientId === clientId) { // 현재 브라우저의 클라이언트 ID와 메시지의 클라이언트 ID가 같으면
+            if (confirm("정말로 이 메시지를 삭제하시겠습니까?")) {
+              db.collection("messages").doc(messageDocId).delete()
+                .then(() => {
+                  console.log("메시지가 성공적으로 삭제되었습니다.");
+                })
+                .catch((error) => {
+                  console.error("메시지 삭제 중 오류 발생:", error);
+                  alert("메시지 삭제 중 오류가 발생했습니다.");
+                });
+            }
+          } else {
+            // 본인 메시지가 아닐 경우 아무 동작도 하지 않음
+            console.log("본인 메시지만 삭제할 수 있습니다.");
+          }
+        };
+      });
     });
 
   function send() {
-    const name = document.getElementById("name").value;
-    const text = document.getElementById("text").value;
-    if (!name || !text) return;
+    const name = nameInput.value.trim();
+    const text = textInput.value.trim();
+    if (!name || !text) {
+        alert("이름과 메시지를 모두 입력해주세요.");
+        return;
+    }
+
+    // 1. 이름 유지: 로컬 저장소에 현재 이름을 저장
+    localStorage.setItem('chatName', name);
 
     db.collection("messages").add({
       name,
       text,
-      time: firebase.firestore.FieldValue.serverTimestamp()
+      time: firebase.firestore.FieldValue.serverTimestamp(),
+      clientId: clientId // 3. 본인 메시지 삭제 기능: 메시지를 보낼 때 클라이언트 ID 함께 저장
     });
 
-    document.getElementById("text").value = "";
+    textInput.value = "";
   }
 </script>
 </body>
