@@ -19,53 +19,60 @@ body {
   align-items: center;
   min-height:100vh;
   margin:0;
-  padding: 15px;
+  padding: 10px; /* 전체 앱 주변 여백 조금 줄임 (화면 활용 최대화) */
   box-sizing: border-box;
-  font-size: 1.1rem; /* 기본 글씨 크기 확대 */
+  font-size: 1.2rem; /* 기본 글씨 크기 더 크게 확대 */
+  -webkit-text-size-adjust: 100%; /* iOS Safari 텍스트 크기 자동 조절 방지 */
 }
 .app {
   width:100%;
   max-width: 600px;
   background:#020617;
   border-radius:12px;
-  padding:15px;
+  padding:20px; /* 앱 내부 패딩 증가 */
   display:flex;
   flex-direction: column;
-  min-height: 80vh;
+  min-height: 95vh; /* 화면 높이를 더 많이 사용 */
   box-shadow: 0 0 20px rgba(0,0,0,0.5);
+  box-sizing: border-box; /* 패딩이 너비/높이에 포함되도록 */
 }
 #messages {
   flex-grow: 1;
   overflow-y:auto;
   border:1px solid #1e293b;
-  padding:10px;
-  margin-bottom:10px;
-  border-radius:6px;
+  padding:15px; /* 메시지 영역 내부 패딩 증가 */
+  margin-bottom:15px; /* 메시지 영역 하단 마진 증가 */
+  border-radius:8px; /* 모서리 더 둥글게 */
   word-wrap: break-word;
+  line-height: 1.6; /* 메시지 줄 간격 더 넓게 */
+  font-size: 1.1rem; /* 메시지 글씨 크기 */
 }
 .msg {
-  margin-bottom:8px; /* 메시지 간격도 조금 늘려 시원하게 */
-  padding: 4px 0;
+  margin-bottom:12px; /* 메시지 간격 더 넓게 */
+  padding: 8px; /* 메시지별 패딩 추가 (터치 영역 확보) */
   cursor: pointer;
-  line-height: 1.5; /* 줄 간격도 보기 좋게 조정 */
+  border-radius: 6px;
+  transition: background-color 0.1s ease;
 }
 .msg:hover {
   background-color: #1e293b;
-  border-radius: 4px;
 }
 .my-message {
   font-weight: bold;
   color: #38bdf8;
+  background-color: rgba(56, 189, 248, 0.1); /* 본인 메시지 배경색도 살짝 다르게 */
 }
 input, button {
-  width:calc(100% - 16px);
-  margin-top:8px; /* 입력 필드 및 버튼 간격도 조정 */
-  padding:10px; /* 입력 필드 및 버튼 패딩 확대 */
-  border-radius:6px;
+  width:calc(100% - 20px); /* 패딩 고려해서 너비 조정 */
+  margin-top:10px; /* 요소들 간의 간격 증가 */
+  padding:15px; /* 입력 필드 및 버튼 패딩 대폭 확대 (터치 영역) */
+  border-radius:8px; /* 모서리 더 둥글게 */
   border:1px solid #1e293b;
   background-color: #0f172a;
   color: white;
-  font-size: 1rem; /* 입력 필드 및 버튼 글씨 크기 */
+  font-size: 1.1rem; /* 입력 필드 및 버튼 글씨 크기 */
+  box-sizing: border-box; /* 패딩이 너비/높이에 포함되도록 */
+  min-height: 50px; /* 최소 높이 설정으로 터치하기 더 쉽게 */
 }
 input::placeholder {
     color: #94a3b8;
@@ -75,10 +82,31 @@ button {
   cursor:pointer;
   font-weight: bold;
   transition: background-color 0.2s;
-  font-size: 1.1rem; /* 버튼 글씨 크기 조금 더 크게 */
+  font-size: 1.2rem; /* 버튼 글씨 크기 더 크게 */
 }
 button:hover {
   background:#0ea5e9;
+}
+
+/* 스마트폰 세로 모드에 대한 추가 조정 */
+@media (max-width: 768px) {
+  .app {
+    border-radius: 0; /* 모바일에서는 모서리 둥글게 안 해도 됨 */
+    padding: 15px;
+    min-height: 100vh; /* 모바일에서는 전체 화면 높이 사용 */
+  }
+  body {
+    padding: 0; /* 모바일에서는 body 패딩 제거 */
+    font-size: 1.1rem; /* 모바일에서는 기본 글씨 크기를 약간 줄여 더 많은 정보가 보이게 */
+  }
+  #messages {
+    font-size: 1rem; /* 메시지 글씨 크기도 약간 줄임 */
+  }
+  input, button {
+    font-size: 1.1rem; /* 모바일에서 입력/버튼 글씨 크기 */
+    padding: 12px; /* 모바일에서 입력/버튼 패딩 */
+    min-height: 48px; /* 모바일에서 최소 높이 */
+  }
 }
 </style>
 </head>
