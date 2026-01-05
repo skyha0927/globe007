@@ -21,78 +21,78 @@ body {
   margin:0;
   padding: 10px; /* 전체 앱 주변 여백 */
   box-sizing: border-box;
-  font-size: 1.3rem; /* 기본 글씨 크기 더 크게 확대 (카톡 느낌) */
+  font-size: 1.2rem; /* 기본 글씨 크기 */
   -webkit-text-size-adjust: 100%; /* iOS Safari 텍스트 크기 자동 조절 방지 */
 }
 .app {
   width:100%;
-  max-width: 650px; /* 스마트폰에서 옆으로 조금 더 키움 */
+  max-width: 700px; /* 옆으로 조금 더 키움 */
   background:#020617;
   border-radius:12px;
   padding:25px; /* 앱 내부 패딩 증가 */
   display:flex;
   flex-direction: column;
   min-height: 95vh; /* 화면 높이를 더 많이 사용 */
-  box-shadow: 0 0 25px rgba(0,0,0,0.6); /* 그림자도 좀 더 진하게 */
+  box-shadow: 0 0 25px rgba(0,0,0,0.6);
   box-sizing: border-box;
 }
 #messages {
   flex-grow: 1;
   overflow-y:auto;
   border:1px solid #1e293b;
-  padding:18px; /* 메시지 영역 내부 패딩 증가 */
-  margin-bottom:18px; /* 메시지 영역 하단 마진 증가 */
-  border-radius:10px; /* 모서리 더 둥글게 */
+  padding:15px; /* 메시지 영역 내부 패딩 */
+  margin-bottom:15px; /* 메시지 영역 하단 마진 */
+  border-radius:10px;
   word-wrap: break-word;
-  line-height: 1.7; /* 메시지 줄 간격 더 넓게 */
-  font-size: 1.2rem; /* 메시지 글씨 크기 (body보다 약간 작게) */
+  line-height: 1.6; /* 메시지 줄 간격 */
+  font-size: 1.1rem; /* 메시지 글씨 크기 (body보다 약간 작게) */
 
   display: flex;
   flex-direction: column-reverse; /* 메시지 아래에서 위로 쌓이게 */
-  justify-content: flex-start; /* 메시지가 시작 지점(바닥)에 정렬 */
+  justify-content: flex-start;
 }
 .msg {
-  margin-top:15px; /* 메시지 간격 더 넓게 (column-reverse이므로 margin-top) */
-  padding: 10px 12px; /* 메시지별 패딩 추가 (터치 영역 확보) */
+  margin-top:10px; /* 메시지 간격 조정 */
+  padding: 8px 10px; /* 메시지별 패딩 조정 */
   cursor: pointer;
   border-radius: 8px;
   transition: background-color 0.1s ease;
   flex-shrink: 0;
-  background-color: #2d3748; /* 메시지 배경색 추가 */
+  background-color: #2d3748;
 }
-.msg:first-child { /* column-reverse 에서는 가장 아래 메시지가 첫 번째 자식 */
-  margin-top: 0; /* 가장 아래 메시지 위쪽 마진 제거 */
+.msg:first-child {
+  margin-top: 0;
 }
 .msg:hover {
-  background-color: #3f4d62; /* 호버 시 색상 변경 */
+  background-color: #3f4d62;
 }
 .my-message {
   font-weight: bold;
-  color: #a7f3d0; /* 본인 메시지 색상 변경 */
-  background-color: #1a4d33; /* 본인 메시지 배경색도 다르게 */
-  text-align: right; /* 본인 메시지는 오른쪽 정렬 */
-  margin-left: auto; /* 본인 메시지를 오른쪽으로 밀기 */
-  max-width: 85%; /* 본인 메시지 최대 너비 제한 */
-  border-bottom-right-radius: 0; /* 말풍선 모양처럼 모서리 조정 */
+  color: #a7f3d0;
+  background-color: #1a4d33;
+  text-align: right;
+  margin-left: auto;
+  max-width: 85%;
+  border-bottom-right-radius: 0;
 }
 .my-message b {
-  color: #a7f3d0; /* 본인 메시지 이름 색상 */
+  color: #a7f3d0;
 }
-.msg b { /* 다른 사용자 메시지 이름 색상 */
+.msg b {
   color: #38bdf8;
 }
 
 input, button {
   width:calc(100% - 24px); /* 패딩 고려해서 너비 조정 */
-  margin-top:12px; /* 요소들 간의 간격 증가 */
-  padding:18px; /* 입력 필드 및 버튼 패딩 대폭 확대 (터치 영역) */
-  border-radius:10px; /* 모서리 더 둥글게 */
+  margin-top:12px;
+  padding:16px; /* 입력 필드 및 버튼 패딩 확대 */
+  border-radius:10px;
   border:1px solid #1e293b;
   background-color: #0f172a;
   color: white;
-  font-size: 1.2rem; /* 입력 필드 및 버튼 글씨 크기 */
+  font-size: 1.1rem; /* 입력 필드 및 버튼 글씨 크기 */
   box-sizing: border-box;
-  min-height: 55px; /* 최소 높이 설정으로 터치하기 더 쉽게 */
+  min-height: 52px; /* 최소 높이 설정으로 터치하기 더 쉽게 */
 }
 input::placeholder {
     color: #94a3b8;
@@ -102,38 +102,40 @@ button {
   cursor:pointer;
   font-weight: bold;
   transition: background-color 0.2s;
-  font-size: 1.3rem; /* 버튼 글씨 크기 더 크게 */
+  font-size: 1.2rem; /* 버튼 글씨 크기 */
 }
 button:hover {
   background:#0ea5e9;
 }
 
-/* 스마트폰 세로 모드에 대한 추가 조정 (미디어 쿼리) */
+/* 스마트폰 세로 모드에 대한 최적화 (가장 중요) */
 @media (max-width: 768px) {
+  body {
+    padding: 0; /* 모바일에서는 body 패딩 제거 */
+    font-size: 1.1rem; /* 모바일에서 기본 글씨 크기 */
+    min-height: 100vh; /* 화면 꽉 채우기 */
+  }
   .app {
     border-radius: 0; /* 모바일에서는 모서리 둥글게 안 해도 됨 */
     padding: 15px;
-    min-height: 100vh; /* 모바일에서는 전체 화면 높이 사용 */
+    min-height: 100vh; /* 화면 꽉 채우기 */
     max-width: 100%; /* 모바일에서는 너비 꽉 채우기 */
   }
-  body {
-    padding: 0; /* 모바일에서는 body 패딩 제거 */
-    font-size: 1.2rem; /* 모바일에서는 기본 글씨 크기 */
-  }
   #messages {
-    font-size: 1.1rem; /* 메시지 글씨 크기 */
-    padding: 12px;
-    margin-bottom: 12px;
+    font-size: 1rem; /* 메시지 글씨 크기 */
+    padding: 10px;
+    margin-bottom: 10px;
     border-radius: 8px;
+    line-height: 1.5; /* 메시지 줄 간격 */
   }
   .msg {
-    margin-top: 10px;
-    padding: 8px 10px;
+    margin-top: 8px; /* 메시지 간격 */
+    padding: 6px 8px; /* 메시지별 패딩 */
   }
   input, button {
-    font-size: 1.1rem;
-    padding: 15px;
-    min-height: 50px;
+    font-size: 1.05rem; /* 모바일에서 입력/버튼 글씨 크기 */
+    padding: 12px; /* 모바일에서 입력/버튼 패딩 */
+    min-height: 48px; /* 모바일에서 최소 높이 */
     margin-top: 10px;
     border-radius: 8px;
   }
@@ -185,8 +187,7 @@ button:hover {
     .orderBy("time", "asc") // 모든 메시지를 오래된 것부터 가져오기
     .onSnapshot(snapshot => {
       // 스크롤 위치를 유지하기 위한 로직
-      // column-reverse이므로 messagesDiv.scrollTop이 0에 가까우면 맨 아래를 보고 있는 것
-      const isScrolledToBottom = messagesDiv.scrollTop < 20; // 20px 오차 허용
+      const isScrolledToBottom = messagesDiv.scrollTop < 20; // 20px 오차 허용 (column-reverse이므로 0에 가까우면 맨 아래)
 
       // 메시지 내용 업데이트 전 현재 스크롤 높이와 클라이언트 높이 기록
       const oldScrollHeight = messagesDiv.scrollHeight;
@@ -194,9 +195,6 @@ button:hover {
 
       messagesDiv.innerHTML = ""; // 메시지 목록 비우기
       
-      // snapshot.docs.reverse().forEach(...) 대신,
-      // Firebase 쿼리에서 `orderBy("time", "asc")`로 가져온 순서대로 `innerHTML`에 추가하고,
-      // `flex-direction: column-reverse` CSS 스타일 덕분에 최신 메시지가 아래에 표시됩니다.
       snapshot.docs.forEach(doc => {
         const m = doc.data();
         const docId = doc.id;
@@ -217,8 +215,6 @@ button:hover {
         messagesDiv.scrollTop = 0;
       } else {
         // 사용자가 위로 스크롤해서 과거 메시지를 보고 있었다면, 스크롤 위치를 유지
-        // 새로운 콘텐츠가 "맨 위" (시각적으로는 메시지 목록의 "처음" 부분)에 추가되었으므로,
-        // 스크롤 높이의 변화량만큼 scrollTop을 조절하여 시각적인 위치를 유지합니다.
         messagesDiv.scrollTop = oldScrollTop + (newScrollHeight - oldScrollHeight);
       }
       
