@@ -173,7 +173,8 @@ button:hover {
 
   const messagesDiv = document.getElementById("messages");
   const nameInput = document.getElementById("name");
-  const textInput = document.getElementById("text"); // 여기서 오타 수정: document.getElementById
+  // *** 여기를 수정했습니다: document.getElementById("text")로 변경 ***
+  const textInput = document.getElementById("text"); 
 
   let clientId = localStorage.getItem('chatClientId');
   if (!clientId) {
@@ -189,8 +190,6 @@ button:hover {
   db.collection("messages")
     .orderBy("time", "asc") // 모든 메시지를 오래된 것부터 가져오기
     .onSnapshot(snapshot => {
-      // 스크롤 위치를 유지하기 위한 로직
-      // column-reverse이므로 messagesDiv.scrollTop이 0에 가까우면 맨 아래를 보고 있는 것
       const isScrolledToBottom = messagesDiv.scrollTop < 20; 
 
       const oldScrollHeight = messagesDiv.scrollHeight;
@@ -198,8 +197,6 @@ button:hover {
 
       messagesDiv.innerHTML = "";
       
-      // *** 중요: 메시지 배열을 뒤집어서 최신 메시지가 DOM의 가장 마지막에 추가되도록 합니다. ***
-      // 그리고 CSS의 flex-direction: column-reverse; 덕분에 시각적으로는 최신 메시지가 아래에 표시됩니다.
       snapshot.docs.reverse().forEach(doc => { 
         const m = doc.data();
         const docId = doc.id;
@@ -214,9 +211,8 @@ button:hover {
       const newScrollHeight = messagesDiv.scrollHeight;
 
       if (isScrolledToBottom) {
-        messagesDiv.scrollTop = 0; // column-reverse에서 0이 시각적 맨 아래입니다.
+        messagesDiv.scrollTop = 0; 
       } else {
-        // 사용자가 위로 스크롤해서 과거 메시지를 보고 있었다면, 스크롤 위치를 유지
         messagesDiv.scrollTop = oldScrollTop + (newScrollHeight - oldScrollHeight);
       }
       
