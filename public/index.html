@@ -224,6 +224,7 @@ button:hover {
 
       messagesDiv.innerHTML = "";
 
+      // **여기서 m.isSystemMessage 체크를 제거하여 모든 메시지를 동일하게 처리**
       snapshot.docs.reverse().forEach(doc => {
         const m = doc.data();
         const docId = doc.id;
@@ -272,16 +273,15 @@ button:hover {
     const name = nameInput.value.trim();
     let messageText = textInput.value.trim();
 
-    if (!name && messageText.toLowerCase() !== "/t") { // /t 명령어는 이름 없이도 가능 (이전과 동일한 버그 수정을 위해 유지)
+    if (!name && messageText.toLowerCase() !== "/t") {
         alert("이름과 메시지를 모두 입력해주세요.");
         return;
     }
-    if (!messageText) { // 메시지 내용이 없으면 전송 불가
+    if (!messageText) {
         alert("메시지를 입력해주세요.");
         return;
     }
 
-    // 이름이 있는 경우에만 localStorage에 저장
     if (name) {
       localStorage.setItem('chatName', name);
     }
@@ -299,7 +299,6 @@ button:hover {
         hours = hours % 12;
         hours = hours ? hours : 12;
 
-        // 일반 메시지 형태로 저장, 이름 포함
         messageText = `${year}.${month}.${day} ${ampm} ${hours}시 ${minutes}분 ${seconds}초`;
         db.collection("messages").add({
             name, // 이름 포함
@@ -308,7 +307,6 @@ button:hover {
             clientId: clientId
         });
     } else {
-        // 일반 메시지 저장
         db.collection("messages").add({
           name,
           text: messageText,
