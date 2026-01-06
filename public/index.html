@@ -130,6 +130,21 @@ button:hover {
   color: #38bdf8;
 }
 
+/* New style for system messages */
+.system-message {
+  text-align: center;
+  font-style: italic;
+  color: #aeb9c6; /* Subtle grey for readability */
+  background-color: #1e293b; /* A darker background to stand out slightly from main background */
+  margin-left: auto; /* Center it */
+  margin-right: auto; /* Center it */
+  max-width: 70%; /* Make it narrower than regular messages */
+  padding: 20px 30px; /* Adjust padding for system messages, smaller than regular message */
+  border-radius: 15px;
+  font-size: 1.8rem; /* Slightly smaller than regular message text for desktop to emphasize it's a system message */
+  cursor: default; /* 시스템 메시지는 클릭해도 반응 없도록 */
+}
+
 /* Mobile optimization (smartphones portrait mode) */
 @media (max-width: 768px) {
   .app {
@@ -165,6 +180,10 @@ button:hover {
   .msg {
     margin-top: 40px; /* 모바일 메시지 간격 대폭 증가 */
     padding: 30px 40px; /* 모바일 메시지별 패딩 대폭 증가 */
+  }
+  .system-message {
+      font-size: 2.2rem; /* 모바일 시스템 메시지 글꼴 크기 */
+      padding: 25px 35px; /* 모바일 시스템 메시지 패딩 */
   }
 }
 </style>
@@ -224,14 +243,18 @@ button:hover {
 
       messagesDiv.innerHTML = "";
 
-      // **여기서 m.isSystemMessage 체크를 제거하여 모든 메시지를 동일하게 처리**
+      // **m.isSystemMessage 체크를 다시 활성화하여 시스템 메시지 처리**
       snapshot.docs.reverse().forEach(doc => {
         const m = doc.data();
         const docId = doc.id;
-        let messageHtml = `<div class="msg" data-docid="${docId}" data-clientid="${m.clientId}"><b>${m.name}</b>: ${m.text}</div>`;
+        let messageHtml;
 
-        if (m.clientId === clientId) {
+        if (m.isSystemMessage) { // 시스템 메시지인 경우
+            messageHtml = `<div class="msg system-message" data-docid="${docId}" data-clientid="${m.clientId}">${m.text}</div>`;
+        } else if (m.clientId === clientId) {
           messageHtml = `<div class="msg my-message" data-docid="${docId}" data-clientid="${m.clientId}"><b>${m.name}</b>: ${m.text}</div>`;
+        } else {
+          messageHtml = `<div class="msg" data-docid="${docId}" data-clientid="${m.clientId}"><b>${m.name}</b>: ${m.text}</div>`;
         }
         messagesDiv.innerHTML += messageHtml;
       });
@@ -249,6 +272,12 @@ button:hover {
       messagesDiv.querySelectorAll('.msg').forEach(messageElement => {
         messageElement.onclick = function() {
           const messageClientId = this.getAttribute('data-clientid');
+          // 시스템 메시지는 삭제 불가능
+          if (messageClientId === "system" || this.classList.contains('system-message')) {
+              console.log("시스템 메시지는 삭제할 수 없습니다.");
+              return;
+          }
+
           const messageDocId = this.getAttribute('data-docid');
 
           if (messageClientId === clientId) {
@@ -273,20 +302,23 @@ button:hover {
     const name = nameInput.value.trim();
     let messageText = textInput.value.trim();
 
+    // /t 명령어는 이름 없이도 가능하지만, 일반 메시지는 이름 필수
     if (!name && messageText.toLowerCase() !== "/t") {
         alert("이름과 메시지를 모두 입력해주세요.");
         return;
     }
+    // 메시지 내용이 없으면 전송 불가 (이름 입력 여부와 별개)
     if (!messageText) {
         alert("메시지를 입력해주세요.");
         return;
     }
 
+    // 이름이 있는 경우에만 localStorage에 저장
     if (name) {
       localStorage.setItem('chatName', name);
     }
 
-    // '/t' 명령어 처리 (대소문자 구분 없이 처리, 시스템 메시지 아님)
+    // '/t' 명령어 처리 (대소문자 구분 없이 처리)
     if (messageText.toLowerCase() === "/t") {
         const now = new Date();
         const year = now.getFullYear();
@@ -299,14 +331,16 @@ button:hover {
         hours = hours % 12;
         hours = hours ? hours : 12;
 
-        messageText = `${year}.${month}.${day} ${ampm} ${hours}시 ${minutes}분 ${seconds}초`;
+        // **시스템 메시지 형태로 저장 로직 복원**
         db.collection("messages").add({
-            name, // 이름 포함
-            text: messageText,
-            time: firebase.firestore.FieldValue.serverTimestamp(),
-            clientId: clientId
+          name: "", // 이름 필드 비움
+          text: `${year}.${month}.${day} ${ampm} ${hours}시 ${minutes}분 ${seconds}초`, // 초까지 표시
+          time: firebase.firestore.FieldValue.serverTimestamp(),
+          clientId: "system", // 시스템 메시지임을 나타내는 clientId
+          isSystemMessage: true // 시스템 메시지 플래그
         });
     } else {
+        // 일반 메시지 저장
         db.collection("messages").add({
           name,
           text: messageText,
