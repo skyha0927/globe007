@@ -12,7 +12,7 @@
 <style>
 /* Reset and base styles */
 html, body {
-  height: 100%; /* 앱이 전체 화면을 채우도록 설정 */
+  height: 100%; /* 전체 화면 높이 사용 */
   margin: 0;
   overflow: hidden; /* body 스크롤 방지 */
   font-family: sans-serif;
@@ -23,7 +23,7 @@ html, body {
 
 .app {
   display: flex;
-  flex-direction: column;
+  flex-direction: column; /* 자식 요소들을 세로로 배치 */
   height: 100%; /* 부모(body) 높이에 맞춤 */
   width: 100%;
   max-width: 980px; /* 데스크톱에서 최대 너비 */
@@ -51,7 +51,7 @@ html, body {
 
 /* Input and Button styles */
 input, button {
-  width: calc(100% - 2px); /* 부모 패딩 고려 */
+  width: 100%; /* 부모 컨테이너의 패딩을 제외한 영역을 꽉 채움 */
   padding: 16px;
   border-radius: 10px;
   border: 1px solid #1e293b;
@@ -77,7 +77,6 @@ button {
   font-weight: bold;
   transition: background-color 0.2s;
   font-size: 1.2rem;
-  width: 100%; /* 버튼 너비 */
   margin-top: 0; /* 푸터 내에서 상단 마진 제거 */
 }
 button:hover {
@@ -208,8 +207,7 @@ button:hover {
   db.collection("messages")
     .orderBy("time", "asc") // 모든 메시지를 오래된 것부터 가져오기
     .onSnapshot(snapshot => {
-      // 스크롤이 가장 아래(최신 메시지)에 가까운지 확인
-      // flex-direction: column-reverse 이므로, scrollTop이 0에 가까우면 가장 아래에 있는 것임
+      // 스크롤이 가장 아래(최신 메시지)에 가까운지 확인 (column-reverse이므로 scrollTop이 0에 가까우면 가장 아래)
       const isScrolledToBottom = messagesDiv.scrollTop < 20;
 
       const oldScrollHeight = messagesDiv.scrollHeight;
