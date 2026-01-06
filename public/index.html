@@ -130,41 +130,60 @@ button:hover {
   color: #38bdf8;
 }
 
+/* New style for system messages */
+.system-message {
+  text-align: center;
+  font-style: italic;
+  color: #aeb9c6; /* Subtle grey for readability */
+  background-color: #1e293b; /* A darker background to stand out slightly from main background */
+  margin-left: auto; /* Center it */
+  margin-right: auto; /* Center it */
+  max-width: 70%; /* Make it narrower than regular messages */
+  padding: 20px 30px; /* Adjust padding for system messages, smaller than regular message */
+  border-radius: 15px;
+  font-size: 1.8rem; /* Slightly smaller than regular message text for desktop to emphasize it's a system message */
+  cursor: default; /* 시스템 메시지는 클릭해도 반응 없도록 */
+}
+
 /* Mobile optimization (smartphones portrait mode) - 이번에 2배 더 커지도록 대폭 수정 */
 @media (max-width: 768px) {
   .app {
     border-radius: 0;
     max-width: 100%;
-    font-size: 3.5rem; /* 모바일 전체 UI 글꼴 크기 대폭 상향 (기존 2.2rem에서 약 1.6배) */
+    font-size: 3.5rem; /* 모바일 전체 UI 글꼴 크기 대폭 상향 */
   }
   .chat-header, .chat-footer, #messages {
-    padding-left: 60px; /* 모바일에서 패딩 대폭 증가 (기존 40px에서 1.5배) */
+    padding-left: 60px; /* 모바일에서 패딩 대폭 증가 */
     padding-right: 60px;
   }
   .chat-header {
-      padding-top: 50px; /* 모바일 헤더 패딩 대폭 증가 (기존 35px에서 1.4배) */
+      padding-top: 50px; /* 모바일 헤더 패딩 대폭 증가 */
       padding-bottom: 35px;
   }
   .chat-footer {
-      padding-top: 35px; /* 모바일 푸터 패딩 대폭 증가 (기존 25px에서 1.4배) */
+      padding-top: 35px; /* 모바일 푸터 패딩 대폭 증가 */
       padding-bottom: 50px;
   }
   input, button {
-    font-size: 2.8rem; /* 모바일 입력/버튼 글꼴 크기 대폭 증가 (기존 2rem에서 1.4배) */
-    padding: 45px; /* 모바일 입력/버튼 패딩 대폭 증가 (기존 30px에서 1.5배) */
-    min-height: 150px; /* 모바일 최소 높이 대폭 증가 (기존 100px에서 1.5배) */
+    font-size: 2.8rem; /* 모바일 입력/버튼 글꼴 크기 대폭 증가 */
+    padding: 45px; /* 모바일 입력/버튼 패딩 대폭 증가 */
+    min-height: 150px; /* 모바일 최소 높이 대폭 증가 */
   }
   button {
-    font-size: 3rem; /* 모바일 버튼 글꼴 크기 대폭 증가 (기존 2.2rem에서 1.3배) */
+    font-size: 3rem; /* 모바일 버튼 글꼴 크기 대폭 증가 */
   }
   #messages {
-    font-size: 2.5rem; /* 모바일 메시지 글꼴 크기 대폭 증가 (기존 1.8rem에서 1.4배) */
-    padding-top: 45px; /* 모바일 메시지 영역 패딩 대폭 증가 */
+    font-size: 2.5rem; /* 모바일 메시지 글꼴 크기 대폭 증가 */
+    padding-top: 45px;
     padding-bottom: 45px;
   }
   .msg {
-    margin-top: 40px; /* 모바일 메시지 간격 대폭 증가 (기존 25px에서 1.6배) */
-    padding: 30px 40px; /* 모바일 메시지별 패딩 대폭 증가 (기존 20px에서 1.5배) */
+    margin-top: 40px; /* 모바일 메시지 간격 대폭 증가 */
+    padding: 30px 40px; /* 모바일 메시지별 패딩 대폭 증가 */
+  }
+  .system-message {
+      font-size: 2.2rem; /* 모바일 시스템 메시지 글꼴 크기 */
+      padding: 25px 35px; /* 모바일 시스템 메시지 패딩 */
   }
 }
 </style>
@@ -227,10 +246,14 @@ button:hover {
       snapshot.docs.reverse().forEach(doc => {
         const m = doc.data();
         const docId = doc.id;
-        let messageHtml = `<div class="msg" data-docid="${docId}" data-clientid="${m.clientId}"><b>${m.name}</b>: ${m.text}</div>`;
+        let messageHtml;
 
-        if (m.clientId === clientId) {
+        if (m.isSystemMessage) { // 시스템 메시지인 경우
+            messageHtml = `<div class="msg system-message" data-docid="${docId}" data-clientid="${m.clientId}">${m.text}</div>`;
+        } else if (m.clientId === clientId) {
           messageHtml = `<div class="msg my-message" data-docid="${docId}" data-clientid="${m.clientId}"><b>${m.name}</b>: ${m.text}</div>`;
+        } else {
+          messageHtml = `<div class="msg" data-docid="${docId}" data-clientid="${m.clientId}"><b>${m.name}</b>: ${m.text}</div>`;
         }
         messagesDiv.innerHTML += messageHtml;
       });
@@ -248,6 +271,12 @@ button:hover {
       messagesDiv.querySelectorAll('.msg').forEach(messageElement => {
         messageElement.onclick = function() {
           const messageClientId = this.getAttribute('data-clientid');
+          // 시스템 메시지는 삭제 불가능
+          if (messageClientId === "system" || this.classList.contains('system-message')) {
+              console.log("시스템 메시지는 삭제할 수 없습니다.");
+              return;
+          }
+
           const messageDocId = this.getAttribute('data-docid');
 
           if (messageClientId === clientId) {
@@ -272,10 +301,15 @@ button:hover {
     const name = nameInput.value.trim();
     let messageText = textInput.value.trim();
 
-    if (!name || !messageText) {
+    if (!name && messageText !== "/t") { // /t 명령어는 이름 없이도 가능
         alert("이름과 메시지를 모두 입력해주세요.");
         return;
     }
+    if (!messageText) { // 메시지 내용이 없으면 전송 불가
+        alert("메시지를 입력해주세요.");
+        return;
+    }
+
 
     localStorage.setItem('chatName', name);
 
@@ -287,21 +321,30 @@ button:hover {
         const day = now.getDate().toString().padStart(2, '0');
         let hours = now.getHours();
         const minutes = now.getMinutes().toString().padStart(2, '0');
+        const seconds = now.getSeconds().toString().padStart(2, '0'); // 초 추가
         const ampm = hours >= 12 ? '오후' : '오전';
         hours = hours % 12;
-        hours = hours ? hours : 12;
+        hours = hours ? hours : 12; // 0시는 12시로 표시 (오전 12시)
 
-        messageText = `${year}.${month}.${day} ${ampm} ${hours}시 ${minutes}분`;
+        // 시스템 메시지 형태로 저장
+        db.collection("messages").add({
+          name: "", // 이름 필드 비움
+          text: `${year}.${month}.${day} ${ampm} ${hours}시 ${minutes}분 ${seconds}초`, // 초까지 표시
+          time: firebase.firestore.FieldValue.serverTimestamp(),
+          clientId: "system", // 시스템 메시지임을 나타내는 clientId
+          isSystemMessage: true // 시스템 메시지 플래그
+        });
+    } else {
+        // 일반 메시지 저장
+        db.collection("messages").add({
+          name,
+          text: messageText,
+          time: firebase.firestore.FieldValue.serverTimestamp(),
+          clientId: clientId
+        });
     }
 
-    db.collection("messages").add({
-      name,
-      text: messageText,
-      time: firebase.firestore.FieldValue.serverTimestamp(),
-      clientId: clientId
-    });
-
-    textInput.value = "";
+    textInput.value = ""; // 메시지 입력창 비우기
   }
 </script>
 </body>
