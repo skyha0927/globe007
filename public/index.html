@@ -32,41 +32,41 @@ html, body {
   border-radius: 12px; /* 데스크톱 모드 라운드 처리 */
   box-shadow: 0 0 25px rgba(0,0,0,0.6);
   box-sizing: border-box;
-  font-size: 2rem; /* 데스크톱 기본 UI 글꼴 크기 */
+  font-size: 3rem; /* 데스크톱 기본 UI 글꼴 크기 대폭 상향 조정 */
 }
 
 /* Header and Footer styles */
 .chat-header, .chat-footer {
   flex-shrink: 0; /* 내용이 많아져도 크기가 줄어들지 않도록 고정 */
-  padding: 40px 50px; /* 내부 여백 */
+  padding: 60px 80px; /* 내부 여백 대폭 증가 */
   background: #020617; /* 앱 배경과 동일하게 */
   border-bottom: 1px solid #1e293b; /* 헤더 구분선 */
 }
 .chat-footer {
   border-top: 1px solid #1e293b; /* 푸터 구분선 */
   border-bottom: none;
-  padding-top: 30px;
-  padding-bottom: 40px;
+  padding-top: 50px; /* 푸터 상단 패딩 증가 */
+  padding-bottom: 60px; /* 푸터 하단 패딩 증가 */
 }
 
 /* Input and Button styles */
 input, button {
   width: 100%; /* 부모 컨테이너의 패딩을 제외한 영역을 꽉 채움 */
-  padding: 25px;
-  border-radius: 15px;
+  padding: 40px; /* 패딩 대폭 증가 */
+  border-radius: 20px; /* 모서리 둥글기 증가 */
   border: 1px solid #1e293b;
   background-color: #0f172a;
   color: white;
-  font-size: 1.8rem;
+  font-size: 2.5rem; /* 글꼴 크기 증가 */
   box-sizing: border-box;
-  min-height: 80px;
+  min-height: 120px; /* 최소 높이 대폭 증가 */
 }
 input#name { /* 이름 입력창 스타일 */
     margin-bottom: 0;
 }
 input#text { /* 메시지 입력창 스타일 */
     margin-top: 0;
-    margin-bottom: 20px;
+    margin-bottom: 30px; /* 버튼과의 간격 증가 */
 }
 input::placeholder {
     color: #94a3b8;
@@ -76,7 +76,7 @@ button {
   cursor: pointer;
   font-weight: bold;
   transition: background-color 0.2s;
-  font-size: 2rem;
+  font-size: 2.8rem; /* 버튼 글꼴 크기 증가 */
   margin-top: 0;
 }
 button:hover {
@@ -87,10 +87,10 @@ button:hover {
 #messages {
   flex-grow: 1; /* 남은 공간을 모두 차지하여 스크롤 가능하게 함 */
   overflow-y: auto; /* 메시지가 넘치면 스크롤 */
-  padding: 30px 50px;
+  padding: 50px 80px; /* 내부 패딩 대폭 증가 */
   word-wrap: break-word;
-  line-height: 1.8;
-  font-size: 1.6rem;
+  line-height: 1.7; /* 줄 간격 증가 */
+  font-size: 2.2rem; /* 메시지 글꼴 크기 증가 */
 
   /* 메시지가 아래에서 위로 쌓이게 하는 설정 */
   display: flex;
@@ -100,10 +100,10 @@ button:hover {
 
 /* Individual message style */
 .msg {
-  margin-top: 20px;
-  padding: 15px 20px;
+  margin-top: 35px; /* 메시지 간격 조정 (column-reverse이므로 margin-top) */
+  padding: 25px 35px; /* 메시지별 패딩 증가 */
   cursor: pointer;
-  border-radius: 12px;
+  border-radius: 18px; /* 모서리 둥글기 증가 */
   transition: background-color 0.1s ease;
   flex-shrink: 0;
   background-color: #2d3748;
@@ -130,41 +130,41 @@ button:hover {
   color: #38bdf8;
 }
 
-/* Mobile optimization (smartphones portrait mode) */
+/* Mobile optimization (smartphones portrait mode) - 이번에 2배 더 커지도록 대폭 수정 */
 @media (max-width: 768px) {
   .app {
     border-radius: 0;
     max-width: 100%;
-    font-size: 2.2rem; /* 모바일 전체 UI 글꼴 크기 대폭 상향 조정 */
+    font-size: 3.5rem; /* 모바일 전체 UI 글꼴 크기 대폭 상향 (기존 2.2rem에서 약 1.6배) */
   }
   .chat-header, .chat-footer, #messages {
-    padding-left: 40px; /* 모바일에서 패딩 대폭 증가 */
-    padding-right: 40px;
+    padding-left: 60px; /* 모바일에서 패딩 대폭 증가 (기존 40px에서 1.5배) */
+    padding-right: 60px;
   }
   .chat-header {
-      padding-top: 35px; /* 모바일 헤더 패딩 대폭 증가 */
-      padding-bottom: 25px;
-  }
-  .chat-footer {
-      padding-top: 25px; /* 모바일 푸터 패딩 대폭 증가 */
+      padding-top: 50px; /* 모바일 헤더 패딩 대폭 증가 (기존 35px에서 1.4배) */
       padding-bottom: 35px;
   }
+  .chat-footer {
+      padding-top: 35px; /* 모바일 푸터 패딩 대폭 증가 (기존 25px에서 1.4배) */
+      padding-bottom: 50px;
+  }
   input, button {
-    font-size: 2rem; /* 모바일 입력/버튼 글꼴 크기 대폭 증가 */
-    padding: 30px; /* 모바일 입력/버튼 패딩 대폭 증가 */
-    min-height: 100px; /* 모바일 최소 높이 대폭 증가 */
+    font-size: 2.8rem; /* 모바일 입력/버튼 글꼴 크기 대폭 증가 (기존 2rem에서 1.4배) */
+    padding: 45px; /* 모바일 입력/버튼 패딩 대폭 증가 (기존 30px에서 1.5배) */
+    min-height: 150px; /* 모바일 최소 높이 대폭 증가 (기존 100px에서 1.5배) */
   }
   button {
-    font-size: 2.2rem; /* 모바일 버튼 글꼴 크기 대폭 증가 */
+    font-size: 3rem; /* 모바일 버튼 글꼴 크기 대폭 증가 (기존 2.2rem에서 1.3배) */
   }
   #messages {
-    font-size: 1.8rem; /* 모바일 메시지 글꼴 크기 대폭 증가 */
-    padding-top: 30px; /* 모바일 메시지 영역 패딩 대폭 증가 */
-    padding-bottom: 30px;
+    font-size: 2.5rem; /* 모바일 메시지 글꼴 크기 대폭 증가 (기존 1.8rem에서 1.4배) */
+    padding-top: 45px; /* 모바일 메시지 영역 패딩 대폭 증가 */
+    padding-bottom: 45px;
   }
   .msg {
-    margin-top: 25px; /* 모바일 메시지 간격 대폭 증가 */
-    padding: 20px 24px; /* 모바일 메시지별 패딩 대폭 증가 */
+    margin-top: 40px; /* 모바일 메시지 간격 대폭 증가 (기존 25px에서 1.6배) */
+    padding: 30px 40px; /* 모바일 메시지별 패딩 대폭 증가 (기존 20px에서 1.5배) */
   }
 }
 </style>
