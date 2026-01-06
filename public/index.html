@@ -145,7 +145,49 @@ button:hover {
   cursor: default; /* 시스템 메시지는 클릭해도 반응 없도록 */
 }
 
-/* Mobile optimization (smartphones portrait mode) - 이번에 2배 더 커지도록 대폭 수정 */
+/* Message interaction menu */
+.message-context-menu {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: #2d3748; /* Darker background */
+  border-radius: 20px;
+  box-shadow: 0 5px 15px rgba(0,0,0,0.5);
+  z-index: 1001; /* Above everything else */
+  display: none; /* Hidden by default */
+  flex-direction: column;
+  padding: 30px;
+  gap: 20px;
+  min-width: 400px; /* Adjust size */
+}
+.context-menu-button {
+  width: 100%;
+  padding: 30px; /* Large buttons */
+  font-size: 2.2rem;
+  border-radius: 15px;
+  background-color: #38bdf8;
+  color: white;
+  border: none;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+.context-menu-button:hover {
+  background-color: #0ea5e9;
+}
+.context-menu-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0,0,0,0.7);
+  z-index: 1000; /* Below the menu */
+  display: none; /* Hidden by default */
+}
+
+
+/* Mobile optimization (smartphones portrait mode) */
 @media (max-width: 768px) {
   .app {
     border-radius: 0;
@@ -185,6 +227,17 @@ button:hover {
       font-size: 2.2rem; /* 모바일 시스템 메시지 글꼴 크기 */
       padding: 25px 35px; /* 모바일 시스템 메시지 패딩 */
   }
+
+  /* Mobile menu adjustments */
+  .message-context-menu {
+    min-width: 90%; /* Occupy most of the screen width */
+    padding: 40px;
+    gap: 25px;
+  }
+  .context-menu-button {
+    padding: 35px;
+    font-size: 2.5rem;
+  }
 }
 </style>
 </head>
@@ -202,6 +255,15 @@ button:hover {
     <button onclick="send()">전송</button>
   </footer>
 </div>
+
+<!-- Message interaction menu -->
+<div id="message-context-menu" class="message-context-menu">
+  <button id="reply-button" class="context-menu-button">답장</button>
+  <button id="delete-for-me-button" class="context-menu-button">나에게서 삭제</button>
+  <button id="delete-for-everyone-button" class="context-menu-button">모두에게서 삭제</button>
+</div>
+<!-- Overlay to close menu on click outside -->
+<div id="context-menu-overlay" class="context-menu-overlay"></div>
 
 <script>
   // Firebase 설정 (기존과 동일)
@@ -221,6 +283,13 @@ button:hover {
   const nameInput = document.getElementById("name");
   const textInput = document.getElementById("text");
 
+  // Get menu elements
+  const messageContextMenu = document.getElementById('message-context-menu');
+  const contextMenuOverlay = document.getElementById('context-menu-overlay');
+  const replyButton = document.getElementById('reply-button');
+  const deleteForMeButton = document.getElementById('delete-for-me-button');
+  const deleteForEveryoneButton = document.getElementById('delete-for-everyone-button');
+
   let clientId = localStorage.getItem('chatClientId');
   if (!clientId) {
     clientId = uuid.v4(); // UUID 라이브러리를 사용하여 고유 ID 생성
@@ -232,99 +301,169 @@ button:hover {
     nameInput.value = storedName;
   }
 
-  db.collection("messages")
-    .orderBy("time", "asc") // 모든 메시지를 오래된 것부터 가져오기
-    .onSnapshot(snapshot => {
-      // 스크롤이 가장 아래(최신 메시지)에 가까운지 확인 (column-reverse이므로 scrollTop이 0에 가까우면 가장 아래)
-      const isScrolledToBottom = messagesDiv.scrollTop < 20;
+  let currentClickedMessage = null; // Store data of the message clicked
 
+  // --- Context Menu Functions ---
+  function openContextMenu(docId, messageClientId, messageText, isSystemMessage) {
+      if (isSystemMessage) {
+          return; // System messages are not interactive for these options
+      }
+
+      currentClickedMessage = { docId, messageClientId, messageText };
+
+      // Show/hide "Delete for everyone" based on ownership
+      if (messageClientId === clientId) { // My message
+          deleteForEveryoneButton.style.display = 'block';
+      } else { // Other's message
+          deleteForEveryoneButton.style.display = 'none';
+      }
+
+      messageContextMenu.style.display = 'flex';
+      contextMenuOverlay.style.display = 'block';
+  }
+
+  function closeContextMenu() {
+      messageContextMenu.style.display = 'none';
+      contextMenuOverlay.style.display = 'none';
+      currentClickedMessage = null; // Clear clicked message data
+  }
+
+  // --- Menu Button Handlers ---
+  function handleReply() {
+      if (!currentClickedMessage) return;
+      textInput.value = `"${currentClickedMessage.messageText}" 에 대한 답장: `;
+      textInput.focus();
+      closeContextMenu();
+  }
+
+  async function handleDeleteForMe() {
+      if (!currentClickedMessage || !confirm("정말로 이 메시지를 나에게서 삭제하시겠습니까?")) return;
+
+      const { docId } = currentClickedMessage;
+      try {
+          // Add current clientId to hiddenForClientIds array in Firestore
+          await db.collection("messages").doc(docId).update({
+              hiddenForClientIds: firebase.firestore.FieldValue.arrayUnion(clientId)
+          });
+          console.log("메시지가 나에게서 삭제되었습니다.");
+      } catch (error) {
+          console.error("나에게서 메시지 삭제 중 오류 발생:", error);
+          alert("메시지 삭제 중 오류가 발생했습니다.");
+      }
+      closeContextMenu();
+  }
+
+  async function handleDeleteForEveryone() {
+      if (!currentClickedMessage || !confirm("정말로 이 메시지를 모두에게서 삭제하시겠습니까?")) return;
+
+      const { docId } = currentClickedMessage;
+      try {
+          await db.collection("messages").doc(docId).delete();
+          console.log("메시지가 모두에게서 삭제되었습니다.");
+      } catch (error) {
+          console.error("메시지 삭제 중 오류 발생:", error);
+          alert("메시지 삭제 중 오류가 발생했습니다.");
+      }
+      closeContextMenu();
+  }
+
+  // Attach event listeners to the menu buttons
+  replyButton.addEventListener('click', handleReply);
+  deleteForMeButton.addEventListener('click', handleDeleteForMe);
+  deleteForEveryoneButton.addEventListener('click', handleDeleteForEveryone);
+  contextMenuOverlay.addEventListener('click', closeContextMenu); // Close menu when clicking overlay
+
+
+  // --- Firebase Firestore Listener ---
+  db.collection("messages")
+    .orderBy("time", "asc")
+    .onSnapshot(snapshot => {
+      const isScrolledToBottom = messagesDiv.scrollTop < 20;
       const oldScrollHeight = messagesDiv.scrollHeight;
       const oldScrollTop = messagesDiv.scrollTop;
 
       messagesDiv.innerHTML = "";
+      const allMessages = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
 
-      snapshot.docs.reverse().forEach(doc => {
-        const m = doc.data();
-        const docId = doc.id;
+      // Client-side filtering for "Delete for me" functionality
+      const filteredMessages = allMessages.filter(m => {
+          // System messages are always shown
+          if (m.isSystemMessage) return true;
+          // If hiddenForClientIds array exists and contains current clientId, hide it
+          return !(m.hiddenForClientIds && m.hiddenForClientIds.includes(clientId));
+      });
+
+      // Render filtered messages in reverse order
+      filteredMessages.reverse().forEach(m => {
+        const docId = m.id;
+        // Extract message text correctly for reply function
+        const messageTextForReply = m.isSystemMessage ? m.text : (m.name ? `${m.name}: ${m.text}` : m.text);
+
         let messageHtml;
-
-        if (m.isSystemMessage) { // 시스템 메시지인 경우
-            messageHtml = `<div class="msg system-message" data-docid="${docId}" data-clientid="${m.clientId}">${m.text}</div>`;
+        if (m.isSystemMessage) {
+            messageHtml = `<div class="msg system-message" data-docid="${docId}" data-clientid="${m.clientId}" data-issystemmessage="true" data-messagetext="${messageTextForReply}">${m.text}</div>`;
         } else if (m.clientId === clientId) {
-          messageHtml = `<div class="msg my-message" data-docid="${docId}" data-clientid="${m.clientId}"><b>${m.name}</b>: ${m.text}</div>`;
+          messageHtml = `<div class="msg my-message" data-docid="${docId}" data-clientid="${m.clientId}" data-issystemmessage="false" data-messagetext="${messageTextForReply}"><b>${m.name}</b>: ${m.text}</div>`;
         } else {
-          messageHtml = `<div class="msg" data-docid="${docId}" data-clientid="${m.clientId}"><b>${m.name}</b>: ${m.text}</div>`;
+          messageHtml = `<div class="msg" data-docid="${docId}" data-clientid="${m.clientId}" data-issystemmessage="false" data-messagetext="${messageTextForReply}"><b>${m.name}</b>: ${m.text}</div>`;
         }
         messagesDiv.innerHTML += messageHtml;
       });
 
       const newScrollHeight = messagesDiv.scrollHeight;
-
-      // 스크롤이 이전에 가장 아래에 있었다면 새 메시지 추가 후에도 가장 아래로 이동
       if (isScrolledToBottom) {
         messagesDiv.scrollTop = 0;
       } else {
-        // 아니면 이전 스크롤 위치 유지 (새 메시지로 인해 스크롤 위치가 밀린 만큼 조정)
         messagesDiv.scrollTop = oldScrollTop + (newScrollHeight - oldScrollHeight);
       }
 
+      // Attach new click handlers to messages
       messagesDiv.querySelectorAll('.msg').forEach(messageElement => {
-        messageElement.onclick = function() {
+        messageElement.onclick = function(event) {
+          event.stopPropagation(); // Prevent clicks from bubbling up to overlay if menu is already open
           const messageClientId = this.getAttribute('data-clientid');
-          // 시스템 메시지는 삭제 불가능
-          if (messageClientId === "system" || this.classList.contains('system-message')) {
-              console.log("시스템 메시지는 삭제할 수 없습니다.");
-              return;
-          }
-
           const messageDocId = this.getAttribute('data-docid');
+          const messageText = this.getAttribute('data-messagetext'); // Get cleaned text
+          const isSystemMessage = this.getAttribute('data-issystemmessage') === 'true';
 
-          if (messageClientId === clientId) {
-            if (confirm("정말로 이 메시지를 삭제하시겠습니까?")) {
-              db.collection("messages").doc(messageDocId).delete()
-                .then(() => {
-                  console.log("메시지가 성공적으로 삭제되었습니다.");
-                })
-                .catch((error) => {
-                  console.error("메시지 삭제 중 오류 발생:", error);
-                  alert("메시지 삭제 중 오류가 발생했습니다.");
-                });
-            }
-          } else {
-            console.log("본인 메시지만 삭제할 수 있습니다.");
-          }
+          openContextMenu(messageDocId, messageClientId, messageText, isSystemMessage);
         };
       });
     });
 
+  // --- Send Message Function ---
   function send() {
     const name = nameInput.value.trim();
     let messageText = textInput.value.trim();
 
-    if (!name && messageText !== "/t") { // /t 명령어는 이름 없이도 가능
+    // /t 명령어는 이름 없이도 가능하지만, 일반 메시지는 이름 필수
+    if (!name && messageText.toLowerCase() !== "/t") {
         alert("이름과 메시지를 모두 입력해주세요.");
         return;
     }
-    if (!messageText) { // 메시지 내용이 없으면 전송 불가
+    // 메시지 내용이 없으면 전송 불가 (이름 입력 여부와 별개)
+    if (!messageText) {
         alert("메시지를 입력해주세요.");
         return;
     }
 
+    // 이름이 있는 경우에만 localStorage에 저장
+    if (name) {
+      localStorage.setItem('chatName', name);
+    }
 
-    localStorage.setItem('chatName', name);
-
-    // '/t' 명령어 처리
-    if (messageText === "/t") {
+    // '/t' 명령어 처리 (대소문자 구분 없이 처리)
+    if (messageText.toLowerCase() === "/t") {
         const now = new Date();
         const year = now.getFullYear();
         const month = (now.getMonth() + 1).toString().padStart(2, '0');
         const day = now.getDate().toString().padStart(2, '0');
         let hours = now.getHours();
         const minutes = now.getMinutes().toString().padStart(2, '0');
-        const seconds = now.getSeconds().toString().padStart(2, '0'); // 초 추가
+        const seconds = now.getSeconds().toString().padStart(2, '0');
         const ampm = hours >= 12 ? '오후' : '오전';
         hours = hours % 12;
-        hours = hours ? hours : 12; // 0시는 12시로 표시 (오전 12시)
+        hours = hours ? hours : 12;
 
         // 시스템 메시지 형태로 저장
         db.collection("messages").add({
@@ -332,7 +471,8 @@ button:hover {
           text: `${year}.${month}.${day} ${ampm} ${hours}시 ${minutes}분 ${seconds}초`, // 초까지 표시
           time: firebase.firestore.FieldValue.serverTimestamp(),
           clientId: "system", // 시스템 메시지임을 나타내는 clientId
-          isSystemMessage: true // 시스템 메시지 플래그
+          isSystemMessage: true, // 시스템 메시지 플래그
+          hiddenForClientIds: [] // 시스템 메시지는 숨김 처리하지 않으므로 빈 배열 유지
         });
     } else {
         // 일반 메시지 저장
@@ -340,11 +480,13 @@ button:hover {
           name,
           text: messageText,
           time: firebase.firestore.FieldValue.serverTimestamp(),
-          clientId: clientId
+          clientId: clientId,
+          isSystemMessage: false, // 일반 메시지는 false
+          hiddenForClientIds: [] // 나중에 나에게서 삭제될 수 있도록 빈 배열로 초기화
         });
     }
 
-    textInput.value = ""; // 메시지 입력창 비우기
+    textInput.value = "";
   }
 </script>
 </body>
