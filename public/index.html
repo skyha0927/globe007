@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
-<title>globe007</title>
+<title>전체 톡방</title>
 
 <!-- Firebase (compat) -->
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
@@ -48,9 +48,6 @@ html, body {
   border-bottom: none;
   padding-top: 50px; /* 푸터 상단 패딩 증가 */
   padding-bottom: 60px; /* 푸터 하단 패딩 증가 */
-  display: flex; /* Flexbox 사용하여 답장 미리보기와 입력창 배치 */
-  flex-direction: column;
-  align-items: stretch;
 }
 
 /* Input and Button styles */
@@ -69,7 +66,7 @@ input#name {
     margin-bottom: 0;
 }
 input#text {
-    margin-top: 0; /* 답장 미리보기와의 간격은 reply-preview에서 조정 */
+    margin-top: 0;
     margin-bottom: 30px;
 }
 input::placeholder {
@@ -157,7 +154,7 @@ button:hover {
   border-radius: 20px;
   box-shadow: 0 5px 15px rgba(0,0,0,0.5);
   z-index: 1001;
-  display: none;
+  display: none; /* Hidden by default */
   flex-direction: column;
   padding: 40px; /* 메뉴 패딩 확대 */
   gap: 25px; /* 버튼 간격 확대 */
@@ -192,50 +189,6 @@ button:hover {
   background: rgba(0,0,0,0.7);
   z-index: 1000;
   display: none;
-}
-
-/* Reply Preview UI */
-#reply-preview {
-  display: none; /* 기본적으로 숨김 */
-  background-color: #1e293b; /* 배경색 */
-  border-radius: 15px;
-  padding: 25px 30px; /* 패딩 */
-  margin-bottom: 20px; /* 입력창과의 간격 */
-  border-left: 8px solid #38bdf8; /* 강조 선 */
-  position: relative;
-  font-size: 1.8rem; /* 글꼴 크기 */
-  line-height: 1.4;
-  word-break: break-all; /* 긴 텍스트 줄바꿈 */
-}
-#reply-preview .sender-name {
-  color: #38bdf8; /* 보낸 사람 이름 색상 */
-  font-weight: bold;
-  margin-bottom: 5px;
-  display: block;
-}
-#reply-preview .original-text {
-  color: #aeb9c6; /* 원본 메시지 텍스트 색상 */
-  display: -webkit-box;
-  -webkit-line-clamp: 2; /* 2줄까지만 표시 */
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-#reply-preview .close-reply {
-  position: absolute;
-  top: 15px;
-  right: 15px;
-  background: none;
-  border: none;
-  font-size: 2.5rem;
-  color: #aeb9c6;
-  cursor: pointer;
-  padding: 0;
-  line-height: 1;
-  transition: color 0.2s;
-}
-#reply-preview .close-reply:hover {
-  color: white;
 }
 
 
@@ -282,26 +235,13 @@ button:hover {
 
   /* Mobile menu adjustments */
   .message-context-menu {
-    min-width: 90%;
-    padding: 50px;
-    gap: 30px;
+    min-width: 90%; /* 화면 너비의 대부분 차지 */
+    padding: 50px; /* 모바일 메뉴 패딩 확대 */
+    gap: 30px; /* 모바일 버튼 간격 확대 */
   }
   .context-menu-button {
-    padding: 45px;
-    font-size: 3rem;
-  }
-
-  /* Mobile reply preview adjustments */
-  #reply-preview {
-    padding: 30px 35px;
-    margin-bottom: 25px;
-    font-size: 2.2rem;
-    border-left-width: 10px;
-  }
-  #reply-preview .close-reply {
-    top: 20px;
-    right: 20px;
-    font-size: 3.5rem;
+    padding: 45px; /* 모바일 버튼 패딩 확대 */
+    font-size: 3rem; /* 모바일 버튼 글꼴 크기 확대 */
   }
 }
 </style>
@@ -316,11 +256,6 @@ button:hover {
   <div id="messages"></div>
 
   <footer class="chat-footer">
-    <div id="reply-preview">
-        <span class="sender-name" id="reply-sender-name"></span>
-        <span class="original-text" id="reply-original-text"></span>
-        <button class="close-reply" onclick="cancelReply()">X</button>
-    </div>
     <input id="text" placeholder="메시지를 입력하세요">
     <button onclick="send()">전송</button>
   </footer>
@@ -370,14 +305,7 @@ button:hover {
   const deleteMessageButton = document.getElementById('delete-message-button'); // "모두에게서 삭제" 또는 "메시지 삭제"
   const banUnbanButton = document.getElementById('ban-unban-button');
 
-  // Reply preview elements
-  const replyPreview = document.getElementById('reply-preview');
-  const replySenderName = document.getElementById('reply-sender-name');
-  const replyOriginalText = document.getElementById('reply-original-text');
-
   let currentClickedMessage = null; // Store data of the message clicked
-  let currentReplyContext = null; // Stores info of the message being replied to
-
 
   // --- Firebase Authentication 로직 ---
   auth.onAuthStateChanged(user => {
@@ -414,13 +342,13 @@ button:hover {
   }
 
   // --- Context Menu Functions ---
-  function openContextMenu(docId, messageUid, messageName, messageText, isSystemMessage) {
+  function openContextMenu(docId, messageUid, messageText, isSystemMessage) {
       if (isSystemMessage) {
           closeContextMenu(); // Ensure menu is closed if system message clicked
           return;
       }
 
-      currentClickedMessage = { docId, messageUid, messageName, messageText };
+      currentClickedMessage = { docId, messageUid, messageText };
 
       // 모든 버튼 초기화 (숨김)
       replyButton.style.display = 'none';
@@ -482,31 +410,9 @@ button:hover {
   // --- 메뉴 버튼 핸들러 ---
   function handleReply() {
       if (!currentClickedMessage) return;
-
-      // 답장 미리보기 설정
-      replySenderName.textContent = currentClickedMessage.messageName;
-      replyOriginalText.textContent = currentClickedMessage.messageText;
-      replyPreview.style.display = 'block';
+      textInput.value = `"${currentClickedMessage.messageText}" 에 대한 답장: `;
       textInput.focus();
-
-      // 현재 답장 컨텍스트 저장
-      currentReplyContext = {
-          replyToMessageId: currentClickedMessage.docId,
-          replyToMessageText: currentClickedMessage.messageText,
-          replyToMessageSenderName: currentClickedMessage.messageName,
-          replyToMessageSenderUid: currentClickedMessage.messageUid
-      };
-      
-      closeContextMenu(); // 컨텍스트 메뉴 닫기
-  }
-
-  // --- 답장 취소 함수 ---
-  function cancelReply() {
-      replyPreview.style.display = 'none';
-      replySenderName.textContent = '';
-      replyOriginalText.textContent = '';
-      currentReplyContext = null;
-      textInput.focus();
+      closeContextMenu();
   }
 
   async function handleDeleteForMe() {
@@ -607,15 +513,15 @@ button:hover {
 
         filteredMessages.reverse().forEach(m => {
           const docId = m.id;
-          let messageTextForReply = m.text; // 보낼 때 저장된 원본 텍스트
+          let messageTextForReply = m.text; 
 
           let messageHtml;
           if (m.isSystemMessage) {
-              messageHtml = `<div class="msg system-message" data-docid="${docId}" data-uid="${m.uid}" data-messagename="" data-messagetext="${messageTextForReply}">${m.text}</div>`;
+              messageHtml = `<div class="msg system-message" data-docid="${docId}" data-uid="${m.uid}" data-messagetext="${messageTextForReply}">${m.text}</div>`;
           } else if (m.uid === currentUid) {
-            messageHtml = `<div class="msg my-message" data-docid="${docId}" data-uid="${m.uid}" data-messagename="${m.name}" data-messagetext="${messageTextForReply}"><b>${m.name}</b>: ${m.text}</div>`;
+            messageHtml = `<div class="msg my-message" data-docid="${docId}" data-uid="${m.uid}" data-messagetext="${messageTextForReply}"><b>${m.name}</b>: ${m.text}</div>`;
           } else {
-            messageHtml = `<div class="msg" data-docid="${docId}" data-uid="${m.uid}" data-messagename="${m.name}" data-messagetext="${messageTextForReply}"><b>${m.name}</b>: ${m.text}</div>`;
+            messageHtml = `<div class="msg" data-docid="${docId}" data-uid="${m.uid}" data-messagetext="${messageTextForReply}"><b>${m.name}</b>: ${m.text}</div>`;
           }
           messagesDiv.innerHTML += messageHtml;
         });
@@ -634,11 +540,10 @@ button:hover {
             event.stopPropagation();
             const messageUid = this.getAttribute('data-uid');
             const messageDocId = this.getAttribute('data-docid');
-            const messageName = this.getAttribute('data-messagename');
             const messageText = this.getAttribute('data-messagetext'); // 저장된 원본 텍스트 사용
             const isSystemMessage = this.classList.contains('system-message');
             
-            openContextMenu(messageDocId, messageUid, messageName, messageText, isSystemMessage);
+            openContextMenu(messageDocId, messageUid, messageText, isSystemMessage);
           };
         });
       });
@@ -672,15 +577,6 @@ button:hover {
       localStorage.setItem('chatName', name);
     }
 
-    const messageData = {
-        name,
-        text: messageText,
-        time: firebase.firestore.FieldValue.serverTimestamp(),
-        uid: currentUid,
-        isSystemMessage: false,
-        hiddenForUids: []
-    };
-
     if (messageText.toLowerCase() === "/t") {
         const now = new Date();
         const year = now.getFullYear();
@@ -693,29 +589,26 @@ button:hover {
         hours = hours % 12;
         hours = hours ? hours : 12;
 
-        messageData.name = "";
-        messageData.text = `${year}.${month}.${day} ${ampm} ${hours}시 ${minutes}분 ${seconds}초`;
-        messageData.uid = "system";
-        messageData.isSystemMessage = true;
+        db.collection("messages").add({
+          name: "",
+          text: `${year}.${month}.${day} ${ampm} ${hours}시 ${minutes}분 ${seconds}초`,
+          time: firebase.firestore.FieldValue.serverTimestamp(),
+          uid: "system",
+          isSystemMessage: true,
+          hiddenForUids: []
+        });
     } else {
-        // 답장 중인 경우 답장 정보 추가
-        if (currentReplyContext) {
-            messageData.replyToMessageId = currentReplyContext.replyToMessageId;
-            messageData.replyToMessageText = currentReplyContext.replyToMessageText;
-            messageData.replyToMessageSenderName = currentReplyContext.replyToMessageSenderName;
-            messageData.replyToMessageSenderUid = currentReplyContext.replyToMessageSenderUid;
-        }
+        db.collection("messages").add({
+          name,
+          text: messageText,
+          time: firebase.firestore.FieldValue.serverTimestamp(),
+          uid: currentUid,
+          isSystemMessage: false,
+          hiddenForUids: []
+        });
     }
 
-    db.collection("messages").add(messageData)
-        .then(() => {
-            textInput.value = "";
-            cancelReply(); // 답장 보낸 후 미리보기 숨김
-        })
-        .catch(error => {
-            console.error("메시지 전송 중 오류 발생:", error);
-            alert("메시지 전송 중 오류가 발생했습니다.");
-        });
+    textInput.value = "";
   }
 </script>
 </body>
