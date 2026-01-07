@@ -546,10 +546,18 @@ button:hover {
 
   // --- Enter 키로 메시지 전송 기능 추가 ---
   textInput.addEventListener('keydown', (event) => {
-    // console.log("Keydown event detected:", event.key); // 디버깅을 위한 로그 추가
-    if (event.key === 'Enter' && !event.shiftKey) { // Shift+Enter는 줄바꿈을 위해 남겨둠
-      event.preventDefault(); // 기본 Enter 동작(줄바꿈) 방지
-      send();
+    // 디버깅을 위한 로그 추가: 어떤 키가 눌렸고 Shift 키 상태는 어떤지 확인
+    console.log("Keydown event detected:", event.key, "Shift key pressed:", event.shiftKey);
+
+    if (event.key === 'Enter') {
+      if (!event.shiftKey) { // Shift+Enter가 아닌 경우 (일반 Enter)
+        event.preventDefault(); // 기본 Enter 동작(줄바꿈) 방지
+        console.log("Enter key pressed (send)!"); // 전송 이벤트 감지 로그
+        send();
+      } else { // Shift+Enter인 경우 (줄바꿈)
+        console.log("Enter key pressed (newline)!"); // 줄바꿈 이벤트 감지 로그
+        // Shift+Enter는 기본 동작(줄바꿈)을 허용하므로 preventDefault()를 호출하지 않음
+      }
     }
   });
 
@@ -725,8 +733,7 @@ button:hover {
           text: `${year}.${month}.${day} ${ampm} ${hours}시 ${minutes}분 ${seconds}초`,
           time: firebase.firestore.FieldValue.serverTimestamp(),
           uid: "system",
-          isSystemMessage: true,
-          hiddenForUids: []
+          isSystemMessage: true,hiddenForUids: []
         });
     } else {
         const messageData = {
@@ -738,4 +745,15 @@ button:hover {
           hiddenForUids: []
         };
         if (replyToDataForFirestore) {
-            messageData.replyTo = replyToDataForFirestore;
+            messageData.replyTo = replyToDataForFirestore; // 답장 정보 추가
+        }
+        db.collection("messages").add(messageData);
+    }
+
+    textInput.value = "";
+    replyingToMessageData = null; // 답장 컨텍스트 초기화
+    currentClickedMessage = null; // 현재 클릭된 메시지 정보 초기화
+  }
+  </script>
+</body>
+</html>
