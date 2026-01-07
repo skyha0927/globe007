@@ -33,34 +33,34 @@ html, body {
   border-radius: 12px;
   box-shadow: 0 0 25px rgba(0,0,0,0.6);
   box-sizing: border-box;
-  font-size: 3rem;
+  font-size: 3rem; /* 데스크톱 기본 UI 글꼴 크기 대폭 상향 조정 */
 }
 
 /* Header and Footer styles */
 .chat-header, .chat-footer {
   flex-shrink: 0;
-  padding: 60px 80px;
+  padding: 60px 80px; /* 내부 여백 대폭 증가 */
   background: #020617;
   border-bottom: 1px solid #1e293b;
 }
 .chat-footer {
   border-top: 1px solid #1e293b;
   border-bottom: none;
-  padding-top: 50px;
-  padding-bottom: 60px;
+  padding-top: 50px; /* 푸터 상단 패딩 증가 */
+  padding-bottom: 60px; /* 푸터 하단 패딩 증가 */
 }
 
 /* Input and Button styles */
 input, button {
   width: 100%;
-  padding: 40px;
+  padding: 40px; /* 패딩 대폭 증가 */
   border-radius: 20px;
   border: 1px solid #1e293b;
   background-color: #0f172a;
   color: white;
-  font-size: 2.5rem;
+  font-size: 2.5rem; /* 글꼴 크기 증가 */
   box-sizing: border-box;
-  min-height: 120px;
+  min-height: 120px; /* 최소 높이 대폭 증가 */
 }
 input#name {
     margin-bottom: 0;
@@ -77,7 +77,7 @@ button {
   cursor: pointer;
   font-weight: bold;
   transition: background-color 0.2s;
-  font-size: 2.8rem;
+  font-size: 2.8rem; /* 버튼 글꼴 크기 증가 */
   margin-top: 0;
 }
 button:hover {
@@ -91,7 +91,7 @@ button:hover {
   padding: 50px 80px;
   word-wrap: break-word;
   line-height: 1.7;
-  font-size: 2.2rem;
+  font-size: 2.2rem; /* 메시지 글꼴 크기 증가 */
   display: flex;
   flex-direction: column-reverse;
   justify-content: flex-start;
@@ -154,16 +154,16 @@ button:hover {
   border-radius: 20px;
   box-shadow: 0 5px 15px rgba(0,0,0,0.5);
   z-index: 1001;
-  display: none;
+  display: none; /* Hidden by default */
   flex-direction: column;
-  padding: 30px;
-  gap: 20px;
-  min-width: 400px;
+  padding: 40px; /* 메뉴 패딩 확대 */
+  gap: 25px; /* 버튼 간격 확대 */
+  min-width: 500px; /* 메뉴 최소 너비 확대 */
 }
 .context-menu-button {
   width: 100%;
-  padding: 30px;
-  font-size: 2.2rem;
+  padding: 40px; /* 버튼 패딩 확대 */
+  font-size: 2.8rem; /* 버튼 글꼴 크기 확대 */
   border-radius: 15px;
   background-color: #38bdf8;
   color: white;
@@ -235,13 +235,13 @@ button:hover {
 
   /* Mobile menu adjustments */
   .message-context-menu {
-    min-width: 90%;
-    padding: 40px;
-    gap: 25px;
+    min-width: 90%; /* 화면 너비의 대부분 차지 */
+    padding: 50px; /* 모바일 메뉴 패딩 확대 */
+    gap: 30px; /* 모바일 버튼 간격 확대 */
   }
   .context-menu-button {
-    padding: 35px;
-    font-size: 2.5rem;
+    padding: 45px; /* 모바일 버튼 패딩 확대 */
+    font-size: 3rem; /* 모바일 버튼 글꼴 크기 확대 */
   }
 }
 </style>
@@ -265,7 +265,7 @@ button:hover {
 <div id="message-context-menu" class="message-context-menu">
   <button id="reply-button" class="context-menu-button">답장</button>
   <button id="delete-for-me-button" class="context-menu-button">나에게서 삭제</button>
-  <button id="delete-message-button" class="context-menu-button delete-all"></button> <!-- 모두에게서 삭제 또는 일반 삭제 -->
+  <button id="delete-message-button" class="context-menu-button"></button> <!-- "모두에게서 삭제" 또는 "메시지 삭제" -->
   <button id="ban-unban-button" class="context-menu-button"></button> <!-- 관리자용 추방/복구 -->
 </div>
 <!-- Overlay to close menu on click outside -->
@@ -355,17 +355,19 @@ button:hover {
       deleteForMeButton.style.display = 'none';
       deleteMessageButton.style.display = 'none';
       banUnbanButton.style.display = 'none';
-      deleteMessageButton.classList.remove('delete-all'); // 빨간색 제거
+      deleteMessageButton.classList.remove('delete-all'); // 빨간색 제거 (모두에게서 삭제 전용)
 
       // '답장' 버튼은 항상 표시 (시스템 메시지 제외)
       replyButton.style.display = 'block';
+      
+      // '나에게서 삭제' 버튼은 항상 표시 (시스템 메시지 제외)
+      deleteForMeButton.style.display = 'block';
 
       if (isCurrentUserAdmin) {
-          // 관리자
+          // --- 관리자 모드 ---
           deleteMessageButton.style.display = 'block'; // '모두에게서 삭제'는 항상 표시
           deleteMessageButton.textContent = '모두에게서 삭제';
           deleteMessageButton.classList.add('delete-all'); // 빨간색 적용
-          deleteForMeButton.style.display = 'block'; // '나에게서 삭제'도 표시 (관리자도 자신에게서만 숨길 수 있음)
 
           if (messageUid !== currentUid) { // 관리자가 다른 사용자의 메시지를 클릭
               banUnbanButton.style.display = 'block'; // '사용자 추방/복구' 버튼 표시
@@ -382,17 +384,16 @@ button:hover {
               }
           }
       } else {
-          // 일반 사용자
+          // --- 일반 사용자 모드 ---
           banUnbanButton.style.display = 'none'; // 일반 사용자는 추방/복구 불가
 
           if (messageUid === currentUid) { // 일반 사용자가 본인 메시지를 클릭
               deleteMessageButton.style.display = 'block'; // '모두에게서 삭제' 버튼 표시
               deleteMessageButton.textContent = '모두에게서 삭제';
               deleteMessageButton.classList.add('delete-all'); // 빨간색 적용
-              deleteForMeButton.style.display = 'block'; // '나에게서 삭제'도 표시
           } else { // 일반 사용자가 남의 메시지를 클릭
-              deleteMessageButton.style.display = 'none'; // 남의 메시지는 모두에게서 삭제 불가
-              deleteForMeButton.style.display = 'block'; // '나에게서 삭제'만 표시
+              // 남의 메시지는 '모두에게서 삭제' 버튼 숨김
+              deleteMessageButton.style.display = 'none'; 
           }
       }
 
@@ -419,7 +420,6 @@ button:hover {
 
       const { docId } = currentClickedMessage;
       try {
-          // hiddenForUids 배열에 현재 UID 추가
           await db.collection("messages").doc(docId).update({
               hiddenForUids: firebase.firestore.FieldValue.arrayUnion(currentUid)
           });
@@ -431,24 +431,28 @@ button:hover {
       closeContextMenu();
   }
 
-  async function handleDeleteMessage() { // "모두에게서 삭제" 또는 "메시지 삭제" 역할
-      if (!currentClickedMessage || !confirm("정말로 이 메시지를 모두에게서 삭제하시겠습니까? (취소할 수 없습니다)")) return;
-
+  async function handleDeleteMessage() { // "모두에게서 삭제" 역할 (일반 사용자는 본인 메시지만, 관리자는 모두)
+      if (!currentClickedMessage) return;
+      
       const { docId, messageUid } = currentClickedMessage;
 
-      // 관리자는 모든 메시지를, 일반 사용자는 본인 메시지만 모두에게서 삭제 가능
-      if (isCurrentUserAdmin || messageUid === currentUid) {
-          try {
-              await db.collection("messages").doc(docId).delete();
-              console.log("메시지가 모두에게서 삭제되었습니다.");
-              closeContextMenu();
-          } catch (error) {
-              console.error("메시지 삭제 중 오류 발생:", error);
-              alert("메시지 삭제 중 오류가 발생했습니다. 보안 규칙을 확인해주세요.");
-          }
-      } else {
-          alert("이 메시지는 모두에게서 삭제할 수 없습니다. 본인 메시지만 가능합니다.");
+      let confirmMsg = "정말로 이 메시지를 모두에게서 삭제하시겠습니까? (취소할 수 없습니다)";
+      if (!isCurrentUserAdmin && messageUid !== currentUid) { // 일반 사용자가 남의 메시지를 삭제하려 할 때
+          alert("다른 사용자의 메시지는 모두에게서 삭제할 수 없습니다.");
           closeContextMenu();
+          return;
+      }
+      
+      if (!confirm(confirmMsg)) return; // 최종 확인
+
+      // 관리자는 모든 메시지를, 일반 사용자는 본인 메시지만 모두에게서 삭제 가능
+      try {
+          await db.collection("messages").doc(docId).delete();
+          console.log("메시지가 모두에게서 삭제되었습니다.");
+          closeContextMenu();
+      } catch (error) {
+          console.error("메시지 삭제 중 오류 발생:", error);
+          alert("메시지 삭제 중 오류가 발생했습니다. 보안 규칙을 확인해주세요.");
       }
   }
 
@@ -509,8 +513,7 @@ button:hover {
 
         filteredMessages.reverse().forEach(m => {
           const docId = m.id;
-          // 메시지 텍스트 가져오기 (이름 부분 제외하고 순수 텍스트만)
-          let messageTextForReply = m.text; // 기본적으로 m.text 사용
+          let messageTextForReply = m.text; 
 
           let messageHtml;
           if (m.isSystemMessage) {
@@ -592,7 +595,7 @@ button:hover {
           time: firebase.firestore.FieldValue.serverTimestamp(),
           uid: "system",
           isSystemMessage: true,
-          hiddenForUids: [] // 시스템 메시지도 숨김 처리할 수 있도록 초기화 (원하면)
+          hiddenForUids: []
         });
     } else {
         db.collection("messages").add({
@@ -601,7 +604,7 @@ button:hover {
           time: firebase.firestore.FieldValue.serverTimestamp(),
           uid: currentUid,
           isSystemMessage: false,
-          hiddenForUids: [] // 나에게서 삭제 기능을 위해 빈 배열로 초기화
+          hiddenForUids: []
         });
     }
 
