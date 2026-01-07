@@ -7,6 +7,7 @@
 <!-- Firebase (compat) -->
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script> <!-- Firebase Auth SDK 추가 -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/uuid/8.3.2/uuid.min.js"></script>
 
 <style>
@@ -216,89 +217,118 @@ button:hover {
 
   firebase.initializeApp(firebaseConfig);
   const db = firebase.firestore();
+  const auth = firebase.auth(); // Firebase Auth 초기화
 
   const messagesDiv = document.getElementById("messages");
   const nameInput = document.getElementById("name");
   const textInput = document.getElementById("text");
 
-  let clientId = localStorage.getItem('chatClientId');
-  if (!clientId) {
-    clientId = uuid.v4(); // UUID 라이브러리를 사용하여 고유 ID 생성
-    localStorage.setItem('chatClientId', clientId);
-  }
+  let currentUid = null; // 현재 사용자의 UID를 저장할 변수
 
-  let storedName = localStorage.getItem('chatName');
-  if (storedName) {
-    nameInput.value = storedName;
-  }
-
-  db.collection("messages")
-    .orderBy("time", "asc") // 모든 메시지를 오래된 것부터 가져오기
-    .onSnapshot(snapshot => {
-      // 스크롤이 가장 아래(최신 메시지)에 가까운지 확인 (column-reverse이므로 scrollTop이 0에 가까우면 가장 아래)
-      const isScrolledToBottom = messagesDiv.scrollTop < 20;
-
-      const oldScrollHeight = messagesDiv.scrollHeight;
-      const oldScrollTop = messagesDiv.scrollTop;
-
-      messagesDiv.innerHTML = "";
-
-      // **m.isSystemMessage 체크를 다시 활성화하여 시스템 메시지 처리**
-      snapshot.docs.reverse().forEach(doc => {
-        const m = doc.data();
-        const docId = doc.id;
-        let messageHtml;
-
-        if (m.isSystemMessage) { // 시스템 메시지인 경우
-            messageHtml = `<div class="msg system-message" data-docid="${docId}" data-clientid="${m.clientId}">${m.text}</div>`;
-        } else if (m.clientId === clientId) {
-          messageHtml = `<div class="msg my-message" data-docid="${docId}" data-clientid="${m.clientId}"><b>${m.name}</b>: ${m.text}</div>`;
-        } else {
-          messageHtml = `<div class="msg" data-docid="${docId}" data-clientid="${m.clientId}"><b>${m.name}</b>: ${m.text}</div>`;
-        }
-        messagesDiv.innerHTML += messageHtml;
-      });
-
-      const newScrollHeight = messagesDiv.scrollHeight;
-
-      // 스크롤이 이전에 가장 아래에 있었다면 새 메시지 추가 후에도 가장 아래로 이동
-      if (isScrolledToBottom) {
-        messagesDiv.scrollTop = 0;
-      } else {
-        // 아니면 이전 스크롤 위치 유지 (새 메시지로 인해 스크롤 위치가 밀린 만큼 조정)
-        messagesDiv.scrollTop = oldScrollTop + (newScrollHeight - oldScrollHeight);
+  // --- Firebase Authentication 로직 ---
+  auth.onAuthStateChanged(user => {
+    if (user) {
+      // User is signed in.
+      currentUid = user.uid;
+      console.log("Logged in anonymously with UID:", currentUid);
+      // 이전에 저장된 이름이 있다면 로드
+      let storedName = localStorage.getItem('chatName');
+      if (storedName) {
+        nameInput.value = storedName;
       }
+      // UI 업데이트 또는 메시지 로딩 시작
+      loadMessages();
+    } else {
+      // User is signed out.
+      console.log("No user signed in. Attempting anonymous sign-in.");
+      // 익명 로그인 시도
+      auth.signInAnonymously()
+        .then(() => {
+          // 익명 로그인이 성공하면 onAuthStateChanged 콜백이 다시 호출됩니다.
+        })
+        .catch((error) => {
+          console.error("Anonymous sign-in failed:", error.code, error.message);
+          alert("채팅 서비스에 접속할 수 없습니다. 다시 시도해주세요.");
+        });
+    }
+  });
 
-      messagesDiv.querySelectorAll('.msg').forEach(messageElement => {
-        messageElement.onclick = function() {
-          const messageClientId = this.getAttribute('data-clientid');
-          // 시스템 메시지는 삭제 불가능
-          if (messageClientId === "system" || this.classList.contains('system-message')) {
-              console.log("시스템 메시지는 삭제할 수 없습니다.");
-              return;
-          }
+  // 메시지 로딩 함수 (onAuthStateChanged 내에서 호출)
+  function loadMessages() {
+    db.collection("messages")
+      .orderBy("time", "asc") // 모든 메시지를 오래된 것부터 가져오기
+      .onSnapshot(snapshot => {
+        // 스크롤이 가장 아래(최신 메시지)에 가까운지 확인 (column-reverse이므로 scrollTop이 0에 가까우면 가장 아래)
+        const isScrolledToBottom = messagesDiv.scrollTop < 20;
 
-          const messageDocId = this.getAttribute('data-docid');
+        const oldScrollHeight = messagesDiv.scrollHeight;
+        const oldScrollTop = messagesDiv.scrollTop;
 
-          if (messageClientId === clientId) {
-            if (confirm("정말로 이 메시지를 삭제하시겠습니까?")) {
-              db.collection("messages").doc(messageDocId).delete()
-                .then(() => {
-                  console.log("메시지가 성공적으로 삭제되었습니다.");
-                })
-                .catch((error) => {
-                  console.error("메시지 삭제 중 오류 발생:", error);
-                  alert("메시지 삭제 중 오류가 발생했습니다.");
-                });
-            }
+        messagesDiv.innerHTML = "";
+
+        // m.isSystemMessage 체크를 다시 활성화하여 시스템 메시지 처리
+        snapshot.docs.reverse().forEach(doc => {
+          const m = doc.data();
+          const docId = doc.id;
+          let messageHtml;
+
+          if (m.isSystemMessage) { // 시스템 메시지인 경우
+              messageHtml = `<div class="msg system-message" data-docid="${docId}" data-uid="${m.uid}">${m.text}</div>`;
+          } else if (m.uid === currentUid) { // clientId 대신 uid 사용
+            messageHtml = `<div class="msg my-message" data-docid="${docId}" data-uid="${m.uid}"><b>${m.name}</b>: ${m.text}</div>`;
           } else {
-            console.log("본인 메시지만 삭제할 수 있습니다.");
+            messageHtml = `<div class="msg" data-docid="${docId}" data-uid="${m.uid}"><b>${m.name}</b>: ${m.text}</div>`;
           }
-        };
+          messagesDiv.innerHTML += messageHtml;
+        });
+
+        const newScrollHeight = messagesDiv.scrollHeight;
+
+        // 스크롤이 이전에 가장 아래에 있었다면 새 메시지 추가 후에도 가장 아래로 이동
+        if (isScrolledToBottom) {
+          messagesDiv.scrollTop = 0;
+        } else {
+          // 아니면 이전 스크롤 위치 유지 (새 메시지로 인해 스크롤 위치가 밀린 만큼 조정)
+          messagesDiv.scrollTop = oldScrollTop + (newScrollHeight - oldScrollHeight);
+        }
+
+        messagesDiv.querySelectorAll('.msg').forEach(messageElement => {
+          messageElement.onclick = function() {
+            const messageUid = this.getAttribute('data-uid'); // clientId 대신 uid 사용
+            // 시스템 메시지는 삭제 불가능
+            if (messageUid === "system" || this.classList.contains('system-message')) {
+                console.log("시스템 메시지는 삭제할 수 없습니다.");
+                return;
+            }
+
+            const messageDocId = this.getAttribute('data-docid');
+
+            if (messageUid === currentUid) { // clientId 대신 uid 사용
+              if (confirm("정말로 이 메시지를 삭제하시겠습니까?")) {
+                db.collection("messages").doc(messageDocId).delete()
+                  .then(() => {
+                    console.log("메시지가 성공적으로 삭제되었습니다.");
+                  })
+                  .catch((error) => {
+                    console.error("메시지 삭제 중 오류 발생:", error);
+                    alert("메시지 삭제 중 오류가 발생했습니다.");
+                  });
+              }
+            } else {
+              console.log("본인 메시지만 삭제할 수 있습니다.");
+            }
+          };
+        });
       });
-    });
+  }
 
   function send() {
+    // UID가 아직 로드되지 않았다면 메시지 전송 불가
+    if (!currentUid) {
+      alert("사용자 정보를 불러오는 중입니다. 잠시 후 다시 시도해주세요.");
+      return;
+    }
+
     const name = nameInput.value.trim();
     let messageText = textInput.value.trim();
 
@@ -331,12 +361,12 @@ button:hover {
         hours = hours % 12;
         hours = hours ? hours : 12;
 
-        // **시스템 메시지 형태로 저장 로직 복원**
+        // 시스템 메시지 형태로 저장
         db.collection("messages").add({
           name: "", // 이름 필드 비움
           text: `${year}.${month}.${day} ${ampm} ${hours}시 ${minutes}분 ${seconds}초`, // 초까지 표시
           time: firebase.firestore.FieldValue.serverTimestamp(),
-          clientId: "system", // 시스템 메시지임을 나타내는 clientId
+          uid: "system", // clientId 대신 uid 사용 (시스템 메시지 UID)
           isSystemMessage: true // 시스템 메시지 플래그
         });
     } else {
@@ -345,7 +375,8 @@ button:hover {
           name,
           text: messageText,
           time: firebase.firestore.FieldValue.serverTimestamp(),
-          clientId: clientId
+          uid: currentUid, // clientId 대신 Firebase Authentication의 UID 사용
+          isSystemMessage: false // 일반 메시지는 false
         });
     }
 
