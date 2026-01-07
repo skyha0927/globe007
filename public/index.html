@@ -191,36 +191,6 @@ button:hover {
   display: none;
 }
 
-/* New CSS for reply indicator */
-.reply-indicator {
-  font-size: 1.8rem;
-  color: #94a3b8;
-  margin-bottom: 5px; /* Space between reply info and message content */
-  padding-bottom: 5px;
-  border-bottom: 1px solid rgba(148, 163, 184, 0.2);
-  display: block; /* Takes its own line */
-  width: 100%; /* Full width within its parent */
-  box-sizing: border-box;
-  word-wrap: break-word; /* Ensure it wraps if long */
-  text-align: left; /* Align reply info to left regardless of message type */
-}
-.msg.my-message .reply-indicator {
-    border-bottom-color: rgba(167, 243, 208, 0.2); /* Lighter border for my messages */
-}
-.reply-indicator .reply-label {
-    font-weight: bold;
-    color: #60a5fa; /* A subtle blue for '답장' */
-}
-.reply-indicator .reply-name {
-    font-weight: bold;
-    color: #818cf8; /* A subtle purple for reply name */
-}
-/* Ensure the main message content is below the reply indicator */
-.msg .message-content {
-    display: block;
-    word-wrap: break-word;
-}
-
 
 /* Mobile optimization (smartphones portrait mode) */
 @media (max-width: 768px) {
@@ -336,7 +306,6 @@ button:hover {
   const banUnbanButton = document.getElementById('ban-unban-button');
 
   let currentClickedMessage = null; // Store data of the message clicked
-  let replyingToMessageData = null; // { docId, uid, name, text, replyTo } of the message currently being replied to for sending
 
   // --- Firebase Authentication 로직 ---
   auth.onAuthStateChanged(user => {
@@ -373,13 +342,13 @@ button:hover {
   }
 
   // --- Context Menu Functions ---
-  function openContextMenu(docId, messageUid, messageName, messageText, isSystemMessage, replyToData) {
+  function openContextMenu(docId, messageUid, messageText, isSystemMessage) {
       if (isSystemMessage) {
           closeContextMenu(); // Ensure menu is closed if system message clicked
           return;
       }
 
-      currentClickedMessage = { docId, messageUid, name: messageName, text: messageText, isSystemMessage, replyTo: replyToData || null };
+      currentClickedMessage = { docId, messageUid, messageText };
 
       // 모든 버튼 초기화 (숨김)
       replyButton.style.display = 'none';
@@ -436,35 +405,12 @@ button:hover {
       messageContextMenu.style.display = 'none';
       contextMenuOverlay.style.display = 'none';
       currentClickedMessage = null; // 클릭된 메시지 데이터 초기화
-      replyingToMessageData = null; // 답장 컨텍스트도 초기화
   }
 
   // --- 메뉴 버튼 핸들러 ---
   function handleReply() {
       if (!currentClickedMessage) return;
-
-      // 답장하는 메시지의 모든 정보 (replyTo 체인 포함)를 저장
-      replyingToMessageData = {
-          docId: currentClickedMessage.docId,
-          uid: currentClickedMessage.messageUid,
-          name: currentClickedMessage.name,
-          text: currentClickedMessage.text,
-          replyTo: currentClickedMessage.replyTo ? JSON.parse(JSON.stringify(currentClickedMessage.replyTo)) : undefined // 깊은 복사
-      };
-
-      let promptChainParts = [];
-      let currentPromptTarget = replyingToMessageData;
-      while(currentPromptTarget && currentPromptTarget.name && currentPromptTarget.text) {
-          promptChainParts.unshift(`"${currentPromptTarget.name}: ${currentPromptTarget.text}"`); // 체인 역순으로 추가
-          currentPromptTarget = currentPromptTarget.replyTo;
-      }
-      
-      let replyPrefix = "";
-      if (promptChainParts.length > 0) {
-          replyPrefix = `${promptChainParts.join(' 에 대한 답장인 ')} 에 대한 답장: `;
-      }
-      
-      textInput.value = replyPrefix;
+      textInput.value = `"${currentClickedMessage.messageText}" 에 대한 답장: `;
       textInput.focus();
       closeContextMenu();
   }
@@ -544,23 +490,6 @@ button:hover {
   banUnbanButton.addEventListener('click', handleBanUnban);
   contextMenuOverlay.addEventListener('click', closeContextMenu);
 
-  // --- Enter 키로 메시지 전송 기능 추가 ---
-  textInput.addEventListener('keydown', (event) => {
-    // 디버깅을 위한 로그 추가: 어떤 키가 눌렸고 Shift 키 상태는 어떤지 확인
-    console.log("Keydown event detected:", event.key, "Shift key pressed:", event.shiftKey);
-
-    if (event.key === 'Enter') {
-      if (!event.shiftKey) { // Shift+Enter가 아닌 경우 (일반 Enter)
-        event.preventDefault(); // 기본 Enter 동작(줄바꿈) 방지
-        console.log("Enter key pressed (send)!"); // 전송 이벤트 감지 로그
-        send();
-      } else { // Shift+Enter인 경우 (줄바꿈)
-        console.log("Enter key pressed (newline)!"); // 줄바꿈 이벤트 감지 로그
-        // Shift+Enter는 기본 동작(줄바꿈)을 허용하므로 preventDefault()를 호출하지 않음
-      }
-    }
-  });
-
 
   // --- Firebase Firestore Listener ---
   function loadMessages() {
@@ -584,35 +513,15 @@ button:hover {
 
         filteredMessages.reverse().forEach(m => {
           const docId = m.id;
-          let messageTextForReply = m.text; // 원본 텍스트 (답장 프롬프트용)
-          let messageName = m.name; // 메시지 발신자 이름
-          let replyToData = m.replyTo || null; // 현재 메시지에 답장 정보가 있는지 확인
+          let messageTextForReply = m.text; 
 
           let messageHtml;
           if (m.isSystemMessage) {
-              messageHtml = `<div class="msg system-message" data-docid="${docId}" data-uid="${m.uid}" data-name="${messageName}" data-messagetext="${messageTextForReply}" data-replyto='${JSON.stringify(replyToData || {})}' >${m.text}</div>`;
+              messageHtml = `<div class="msg system-message" data-docid="${docId}" data-uid="${m.uid}" data-messagetext="${messageTextForReply}">${m.text}</div>`;
+          } else if (m.uid === currentUid) {
+            messageHtml = `<div class="msg my-message" data-docid="${docId}" data-uid="${m.uid}" data-messagetext="${messageTextForReply}"><b>${m.name}</b>: ${m.text}</div>`;
           } else {
-              let replyDisplayHtml = '';
-              if (m.replyTo) {
-                  let currentReply = m.replyTo;
-                  let tempChain = [];
-                  while(currentReply) {
-                      tempChain.push({name: currentReply.name, text: currentReply.text});
-                      currentReply = currentReply.replyTo;
-                  }
-                  tempChain.reverse(); // 가장 오래된 답장부터 순서대로 정렬
-
-                  if (tempChain.length > 0) {
-                      let formattedChain = tempChain.map(item => `<b class="reply-name">${item.name}</b>의 "${item.text}"`).join(' 에 대한 답장 ');
-                      replyDisplayHtml = `<span class="reply-indicator"><span class="reply-label">답장</span>: ${formattedChain}</span>`;
-                  }
-              }
-              
-              if (m.uid === currentUid) {
-                messageHtml = `<div class="msg my-message" data-docid="${docId}" data-uid="${m.uid}" data-name="${messageName}" data-messagetext="${messageTextForReply}" data-replyto='${JSON.stringify(replyToData || {})}' >${replyDisplayHtml}<span class="message-content"><b>${m.name}</b>: ${m.text}</span></div>`;
-              } else {
-                messageHtml = `<div class="msg" data-docid="${docId}" data-uid="${m.uid}" data-name="${messageName}" data-messagetext="${messageTextForReply}" data-replyto='${JSON.stringify(replyToData || {})}' >${replyDisplayHtml}<span class="message-content"><b>${m.name}</b>: ${m.text}</span></div>`;
-              }
+            messageHtml = `<div class="msg" data-docid="${docId}" data-uid="${m.uid}" data-messagetext="${messageTextForReply}"><b>${m.name}</b>: ${m.text}</div>`;
           }
           messagesDiv.innerHTML += messageHtml;
         });
@@ -631,12 +540,10 @@ button:hover {
             event.stopPropagation();
             const messageUid = this.getAttribute('data-uid');
             const messageDocId = this.getAttribute('data-docid');
-            const messageName = this.getAttribute('data-name'); // 새로 추가된 속성
-            const messageText = this.getAttribute('data-messagetext');
+            const messageText = this.getAttribute('data-messagetext'); // 저장된 원본 텍스트 사용
             const isSystemMessage = this.classList.contains('system-message');
-            const replyToDataFromAttr = JSON.parse(this.getAttribute('data-replyto')); // replyTo 객체 파싱
-
-            openContextMenu(messageDocId, messageUid, messageName, messageText, isSystemMessage, replyToDataFromAttr);
+            
+            openContextMenu(messageDocId, messageUid, messageText, isSystemMessage);
           };
         });
       });
@@ -655,68 +562,22 @@ button:hover {
     }
 
     const name = nameInput.value.trim();
-    let messageTextInput = textInput.value; // 입력 필드의 전체 내용
-    let actualMessageContent = messageTextInput.trim(); // 실제 Firestore에 저장할 메시지 내용
-    let replyToDataForFirestore = null; // Firestore에 저장할 답장 정보
+    let messageText = textInput.value.trim();
 
-    if (replyingToMessageData) {
-        // --- Calculate expectedPrefix for stripping from input (handleReply와 동일한 로직) ---
-        let promptChainParts = [];
-        let currentPromptTarget = replyingToMessageData;
-        while(currentPromptTarget && currentPromptTarget.name && currentPromptTarget.text) {
-            promptChainParts.unshift(`"${currentPromptTarget.name}: ${currentPromptTarget.text}"`);
-            currentPromptTarget = currentPromptTarget.replyTo;
-        }
-        
-        let expectedPrefix = "";
-        if (promptChainParts.length > 0) {
-            expectedPrefix = `${promptChainParts.join(' 에 대한 답장인 ')} 에 대한 답장: `;
-        }
-        // --- End expectedPrefix calculation ---
-
-        if (actualMessageContent.startsWith(expectedPrefix)) {
-            actualMessageContent = actualMessageContent.substring(expectedPrefix.length).trim();
-        } else {
-            // 사용자가 프롬프트를 수정했을 수 있으므로, 전체 내용을 메시지로 사용
-            // 또는 사용자에게 경고 메시지를 띄울 수 있음. 여기서는 전체 내용을 사용.
-        }
-
-        if (!actualMessageContent) {
-            alert("메시지 내용을 입력해주세요.");
-            return;
-        }
-
-        // Firestore에 저장할 답장 정보 구성 (현재 답장하는 메시지의 체인 포함)
-        replyToDataForFirestore = {
-            name: replyingToMessageData.name,
-            text: replyingToMessageData.text,
-            docId: replyingToMessageData.docId,
-        };
-        if (replyingToMessageData.replyTo) {
-            // 답장하는 메시지가 또 다른 답장이었다면, 그 replyTo 체인까지 깊은 복사하여 포함
-            replyToDataForFirestore.replyTo = JSON.parse(JSON.stringify(replyingToMessageData.replyTo));
-        }
+    if (!name && messageText.toLowerCase() !== "/t") {
+        alert("이름과 메시지를 모두 입력해주세요.");
+        return;
     }
-    
-    // 유효성 검사 (시스템 메시지 '/t' 제외)
-    if (actualMessageContent.toLowerCase() !== "/t") {
-        if (!name) {
-            alert("이름을 입력해주세요.");
-            return;
-        }
-        if (!actualMessageContent) {
-            alert("메시지를 입력해주세요.");
-            return;
-        }
+    if (!messageText) {
+        alert("메시지를 입력해주세요.");
+        return;
     }
-
 
     if (name) {
       localStorage.setItem('chatName', name);
     }
 
-    // '/t' 명령 처리
-    if (messageTextInput.toLowerCase() === "/t") { // 입력 필드의 원본 값을 사용
+    if (messageText.toLowerCase() === "/t") {
         const now = new Date();
         const year = now.getFullYear();
         const month = (now.getMonth() + 1).toString().padStart(2, '0');
@@ -733,26 +594,21 @@ button:hover {
           text: `${year}.${month}.${day} ${ampm} ${hours}시 ${minutes}분 ${seconds}초`,
           time: firebase.firestore.FieldValue.serverTimestamp(),
           uid: "system",
-          isSystemMessage: true,hiddenForUids: []
+          isSystemMessage: true,
+          hiddenForUids: []
         });
     } else {
-        const messageData = {
+        db.collection("messages").add({
           name,
-          text: actualMessageContent, // 추출된 실제 메시지 내용 저장
+          text: messageText,
           time: firebase.firestore.FieldValue.serverTimestamp(),
           uid: currentUid,
           isSystemMessage: false,
           hiddenForUids: []
-        };
-        if (replyToDataForFirestore) {
-            messageData.replyTo = replyToDataForFirestore; // 답장 정보 추가
-        }
-        db.collection("messages").add(messageData);
+        });
     }
 
     textInput.value = "";
-    replyingToMessageData = null; // 답장 컨텍스트 초기화
-    currentClickedMessage = null; // 현재 클릭된 메시지 정보 초기화
   }
 </script>
 </body>
