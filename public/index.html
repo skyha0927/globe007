@@ -546,6 +546,7 @@ button:hover {
 
   // --- Enter 키로 메시지 전송 기능 추가 ---
   textInput.addEventListener('keydown', (event) => {
+    // console.log("Keydown event detected:", event.key); // 디버깅을 위한 로그 추가
     if (event.key === 'Enter' && !event.shiftKey) { // Shift+Enter는 줄바꿈을 위해 남겨둠
       event.preventDefault(); // 기본 Enter 동작(줄바꿈) 방지
       send();
@@ -737,15 +738,4 @@ button:hover {
           hiddenForUids: []
         };
         if (replyToDataForFirestore) {
-            messageData.replyTo = replyToDataForFirestore; // 답장 정보 추가
-        }
-        db.collection("messages").add(messageData);
-    }
-
-    textInput.value = "";
-    replyingToMessageData = null; // 답장 컨텍스트 초기화
-    currentClickedMessage = null; // 현재 클릭된 메시지 정보 초기화
-  }
-</script>
-</body>
-</html>
+            messageData.replyTo = replyToDataForFirestore;
