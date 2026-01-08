@@ -647,7 +647,83 @@ button:hover {
         });
       });
 }
+ // ==== handleFileUpload 함수 시작 ====
+  async function handleFileUpload(event) {
+      if (!currentUid) {
+          alert("사용자 정보를 불러오는 중입니다. 잠시 후 다시 시도해주세요.");
+          fileInput.value = ""; // 파일 선택 취소
+          return;
+      }
 
+      const file = event.target.files[0]; // 선택된 파일 가져오기
+      if (!file) {
+          return; // 파일이 선택되지 않았으면 함수 종료
+      }
+
+      if (bannedUids.includes(currentUid)) {
+          alert("당신은 채팅 서비스에서 차단되어 파일을 첨부할 수 없습니다.");
+          fileInput.value = "";
+          return;
+      }
+
+      // 실제 앱에서는 로딩 스피너 등으로 교체하는 것이 좋음
+      // alert("파일 업로드 중..."); 
+
+      try {
+          // 파일 저장 경로 (예: chat_uploads/사용자UID/파일명_타임스탬프.확장자)
+          const fileName = `chat_uploads/${currentUid}/${Date.now()}_${file.name}`;
+          const storageRef = storage.ref(fileName);
+
+          // 파일 업로드
+          const uploadTask = storageRef.put(file);
+
+          // 업로드 진행률 모니터링 (선택 사항)
+          uploadTask.on('state_changed',
+              (snapshot) => {
+                  const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+                  console.log('Upload is ' + progress + '% done');
+                  // 여기에 사용자에게 진행률을 표시하는 UI를 업데이트하는 코드를 추가할 수 있습니다.
+              },
+              (error) => {
+                  console.error("파일 업로드 중 오류 발생:", error);
+                  alert("파일 업로드 실패: " + error.message);
+                  fileInput.value = "";
+              },
+              async () => {
+                  // 업로드 성공 시
+                  const downloadURL = await storageRef.getDownloadURL();
+                  console.log("파일 업로드 성공, 다운로드 URL:", downloadURL);
+
+                  const name = nameInput.value.trim();
+                  if (!name) {
+                      alert("이름을 입력해주세요.");
+                      return;
+                  }
+
+                  // Firestore에 메시지와 함께 다운로드 URL 저장
+                  await db.collection("messages").add({
+                      name: name,
+                      text: file.name, // 메시지 텍스트 대신 파일 이름 표시
+                      time: firebase.firestore.FieldValue.serverTimestamp(),
+                      uid: currentUid,
+                      isSystemMessage: false,
+                      fileUrl: downloadURL, // 파일 URL 저장
+                      fileType: file.type, // 파일 MIME 타입 저장 (예: image/jpeg, application/pdf)
+                      hiddenForUids: []
+                  });
+
+                  // alert("파일 첨부 메시지 전송 성공!");
+                  fileInput.value = ""; // 파일 input 초기화 (같은 파일 다시 선택 가능하도록)
+              }
+          );
+
+      } catch (error) {
+          console.error("파일 업로드 시작 중 오류 발생:", error);
+          alert("파일 업로드 시작 실패: " + error.message);
+          fileInput.value = "";
+      }
+  }
+  // ==== handleFileUpload 함수 끝 ====
   function send() {
     if (!currentUid) {
       alert("사용자 정보를 불러오는 중입니다. 잠시 후 다시 시도해주세요.");
