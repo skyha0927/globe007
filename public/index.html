@@ -8,6 +8,7 @@
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-storage-compat.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/uuid/8.3.2/uuid.min.js"></script>
 
 <style>
@@ -306,6 +307,14 @@ button:hover {
 
   <footer class="chat-footer">
     <input id="text" placeholder="메시지를 입력하세요">
+
+       <!-- ==== 파일 첨부 관련 UI 시작 ==== -->
+    <!-- 파일 첨부 버튼 -->
+    <button id="attachFileButton" onclick="document.getElementById('fileInput').click()" style="margin-top: 15px;">파일 첨부</button>
+    <!-- 숨겨진 파일 선택 input -->
+    <input type="file" id="fileInput" style="display: none;" accept="image/*, video/*, audio/*, .pdf">
+    <!-- ==== 파일 첨부 관련 UI 끝 ==== -->
+    
     <button onclick="send()">전송</button>
   </footer>
 </div>
@@ -335,6 +344,15 @@ button:hover {
   const db = firebase.firestore();
   const auth = firebase.auth();
 
+   // ==== 새로 추가될 JavaScript 코드 시작 ====
+  const storage = firebase.storage(); // Firebase Storage 초기화
+
+  const fileInput = document.getElementById("fileInput"); // 새로 추가한 fileInput 요소 가져오기
+
+  // 파일이 선택되었을 때 실행될 이벤트 리스너 추가 (handleFileUpload 함수는 나중에 추가)
+  fileInput.addEventListener('change', handleFileUpload);
+  // ==== 새로 추가될 JavaScript 코드 끝 ====
+  
   const messagesDiv = document.getElementById("messages");
   const nameInput = document.getElementById("name");
   const textInput = document.getElementById("text");
