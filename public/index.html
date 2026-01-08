@@ -239,7 +239,141 @@ button:hover {
 .system-message .message-time {
     display: none;
 }
+/* Reset and base styles */
+/* ... (기존 스타일은 그대로 유지) ... */
 
+/* Input and Button styles - 기존 rule을 수정합니다 */
+/* 이제 input과 button에 각각 필요한 스타일만 적용하고, 공통 스타일은 class로 분리합니다 */
+
+/* 기존 input, button 규칙을 더 세분화 */
+input {
+  width: 100%; /* input은 너비를 꽉 채우도록 */
+  padding: 40px; /* 기존 패딩 유지 */
+  border-radius: 20px;
+  border: 1px solid #1e293b;
+  background-color: #0f172a;
+  color: white;
+  font-size: 2.5rem; /* 글꼴 크기 유지 */
+  box-sizing: border-box;
+  min-height: 120px; /* 최소 높이 유지 */
+}
+
+/* icon-button 공통 스타일 (파일 첨부, 전송 버튼) */
+.icon-button {
+  background: #38bdf8; /* 전송 버튼 색상 */
+  color: white;
+  border: none;
+  border-radius: 20px; /* input과 비슷하게 둥글게 */
+  cursor: pointer;
+  font-size: 2.8rem; /* 아이콘 크기 */
+  width: 120px; /* 버튼 고정 너비 */
+  min-width: 120px;
+  height: 120px; /* 버튼 고정 높이 - input의 min-height와 비슷하게 */
+  min-height: 120px;
+  display: flex; /* flex를 사용하여 아이콘을 중앙에 배치 */
+  justify-content: center;
+  align-items: center;
+  transition: background-color 0.2s;
+  flex-shrink: 0; /* 버튼이 줄어들지 않도록 */
+  padding: 0; /* 기본 패딩 제거 */
+}
+
+.icon-button:hover {
+  background: #0ea5e9;
+}
+
+/* 파일 첨부 버튼 개별 스타일 */
+.file-attach-button {
+  background: #60a5fa; /* 파란색 계열로 구분 */
+}
+.file-attach-button:hover {
+  background: #3b82f6;
+}
+
+/* message-input 스타일 */
+.chat-footer .message-input {
+  flex-grow: 1; /* 남은 공간을 input이 채우도록 */
+  margin: 0; /* flexbox가 간격을 처리하므로 기본 마진 제거 */
+}
+
+/* 기존 input#name, input#text, button 규칙에서 충돌 제거 및 정리 */
+input#name { /* 이 규칙은 header에 있는 input에만 적용 */
+    margin-bottom: 0;
+}
+input#text { /* 이 규칙은 이제 .message-input으로 대체되므로 사실상 필요 없음 */
+    /* margin-top: 0; */
+    /* margin-bottom: 30px; */
+}
+/* footer 내 button에 대한 마진 규칙 제거 (flexbox gap으로 대체) */
+.chat-footer button {
+    margin-top: 0 !important; /* HTML에 직접 추가한 style이 있다면 !important로 재정의 */
+    margin-bottom: 0 !important;
+}
+
+
+/* Header and Footer styles - chat-footer 수정 */
+.chat-header, .chat-footer {
+  flex-shrink: 0;
+  padding: 60px 80px; /* 내부 여백 유지 */
+  background: #020617;
+  border-bottom: 1px solid #1e293b;
+}
+.chat-footer {
+  border-top: 1px solid #1e293b;
+  border-bottom: none;
+  padding-top: 50px; /* 푸터 상단 패딩 유지 */
+  padding-bottom: 60px; /* 푸터 하단 패딩 유지 */
+  display: flex; /* flex 컨테이너로 만듭니다 */
+  align-items: center; /* 항목들을 세로 중앙에 정렬 */
+  gap: 30px; /* 항목들 사이의 간격 */
+}
+
+
+/* Mobile optimization (smartphones portrait mode) - 기존 rule을 수정합니다 */
+@media (max-width: 768px) {
+  .app {
+    /* ... 기존 스타일 ... */
+  }
+  .chat-header, .chat-footer, #messages {
+    padding-left: 60px;
+    padding-right: 60px;
+  }
+  .chat-header {
+      /* ... 기존 스타일 ... */
+  }
+  .chat-footer {
+      padding-top: 35px; /* 모바일 푸터 패딩 조정 */
+      padding-bottom: 50px; /* 모바일 푸터 패딩 조정 */
+      gap: 20px; /* 모바일 항목 간격 */
+  }
+
+  /* 모바일용 input, button 규칙 조정 */
+  input { /* input은 기존 min-height 유지 */
+    font-size: 2.8rem;
+    padding: 45px;
+    min-height: 150px;
+  }
+  .icon-button { /* 아이콘 버튼은 모바일에서도 비슷한 비율 유지 */
+    width: 100px;
+    min-width: 100px;
+    height: 100px;
+    min-height: 100px;
+    font-size: 3rem; /* 모바일 버튼 글꼴 크기 */
+  }
+  /* chat-footer .message-input은 input rule 따름 */
+
+  #messages {
+    /* ... 기존 스타일 ... */
+  }
+  .msg {
+    /* ... 기존 스타일 ... */
+  }
+  .system-message {
+      /* ... 기존 스타일 ... */
+  }
+
+  /* ... 나머지 모바일 메뉴 조정 스타일 ... */
+}
 /* ... 나머지 스타일 ... */
 
 /* Mobile optimization (smartphones portrait mode) */
@@ -306,17 +440,18 @@ button:hover {
   <div id="messages"></div>
 
   <footer class="chat-footer">
-    <input id="text" placeholder="메시지를 입력하세요">
-
-       <!-- ==== 파일 첨부 관련 UI 시작 ==== -->
-    <!-- 파일 첨부 버튼 -->
-    <button id="attachFileButton" onclick="document.getElementById('fileInput').click()" style="margin-top: 15px;">파일 첨부</button>
-    <!-- 숨겨진 파일 선택 input -->
+    <footer class="chat-footer">
+    <!-- 파일 첨부 버튼 (왼쪽) -->
+    <button id="attachFileButton" onclick="document.getElementById('fileInput').click()" class="icon-button file-attach-button">&#43;</button>
+    <!-- 숨겨진 파일 선택 input은 그대로 유지 -->
     <input type="file" id="fileInput" style="display: none;" accept="image/*, video/*, audio/*, .pdf">
-    <!-- ==== 파일 첨부 관련 UI 끝 ==== -->
-    
-    <button onclick="send()">전송</button>
-  </footer>
+
+    <!-- 메시지 입력 필드 (가운데) -->
+    <input id="text" placeholder="메시지를 입력하세요" class="message-input">
+
+    <!-- 전송 버튼 (오른쪽) -->
+    <button onclick="send()" class="icon-button send-button">&#x2708;</button>
+</footer>
 </div>
 
 <!-- Message interaction menu -->
