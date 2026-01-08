@@ -492,7 +492,7 @@ button:hover {
 
 
   // --- Firebase Firestore Listener ---
-  function loadMessages() {
+ function loadMessages() {
     db.collection("messages")
       .orderBy("time", "asc")
       .onSnapshot(snapshot => {
@@ -503,25 +503,58 @@ button:hover {
         messagesDiv.innerHTML = "";
         const allMessages = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
 
-        // Client-side filtering for "나에게서 삭제"
         const filteredMessages = allMessages.filter(m => {
-            // 시스템 메시지는 항상 표시
             if (m.isSystemMessage) return true;
-            // hiddenForUids 배열에 현재 UID가 포함되어 있으면 숨김
             return !(m.hiddenForUids && m.hiddenForUids.includes(currentUid));
         });
 
         filteredMessages.reverse().forEach(m => {
           const docId = m.id;
-          let messageTextForReply = m.text; 
+          let messageTextToDisplay = m.text; // 기본적으로 메시지 텍스트를 표시
+          let messageTime = ''; // 메시지 시간을 저장할 변수
+
+          // Firestore Timestamp를 JavaScript Date 객체로 변환하고 시간 포맷
+          if (m.time && m.time.toDate) { // m.time이 Timestamp 객체인지 확인
+              const date = m.time.toDate();
+              let hours = date.getHours();
+              const minutes = date.getMinutes().toString().padStart(2, '0');
+              const ampm = hours >= 12 ? '오후' : '오전';
+              hours = hours % 12;
+              hours = hours ? hours : 12; // 0시는 12시로 표시
+              messageTime = `<span class="message-time">${ampm} ${hours}:${minutes}</span>`;
+          }
+
+
+          // --- 파일 첨부 메시지 처리 로직 추가 (기존과 동일) ---
+          if (m.fileUrl) { // fileUrl 필드가 존재하면
+            if (m.fileType && m.fileType.startsWith('image/')) { // 이미지 파일인 경우
+              messageTextToDisplay = `<img src="${m.fileUrl}" alt="${m.text}" style="max-width: 100%; height: auto; border-radius: 8px; margin-top: 10px;">`;
+            } else { // 이미지 외 다른 파일인 경우 (다운로드 링크)
+              messageTextToDisplay = `<a href="${m.fileUrl}" target="_blank" style="color: #38bdf8; text-decoration: underline;">${m.text} (파일 다운로드)</a>`;
+            }
+          }
+          // --- 파일 첨부 메시지 처리 로직 끝 ---
+
 
           let messageHtml;
           if (m.isSystemMessage) {
-              messageHtml = `<div class="msg system-message" data-docid="${docId}" data-uid="${m.uid}" data-messagetext="${messageTextForReply}">${m.text}</div>`;
+              messageHtml = `<div class="msg system-message" data-docid="${docId}" data-uid="${m.uid}" data-messagetext="${m.text}">${messageTextToDisplay}</div>`;
           } else if (m.uid === currentUid) {
-            messageHtml = `<div class="msg my-message" data-docid="${docId}" data-uid="${m.uid}" data-messagetext="${messageTextForReply}"><b>${m.name}</b>: ${m.text}</div>`;
+            // 내 메시지: 시간과 이름+텍스트를 한 줄에 표시
+            messageHtml = `<div class="msg my-message" data-docid="${docId}" data-uid="${m.uid}" data-messagetext="${m.text}">
+                            <div style="display: flex; justify-content: flex-end; align-items: flex-end;">
+                                ${messageTime}
+                                <span style="margin-left: 10px;"><b>${m.name}</b>: ${messageTextToDisplay}</span>
+                            </div>
+                           </div>`;
           } else {
-            messageHtml = `<div class="msg" data-docid="${docId}" data-uid="${m.uid}" data-messagetext="${messageTextForReply}"><b>${m.name}</b>: ${m.text}</div>`;
+            // 다른 사람 메시지: 이름+텍스트와 시간을 한 줄에 표시
+            messageHtml = `<div class="msg" data-docid="${docId}" data-uid="${m.uid}" data-messagetext="${m.text}">
+                            <div style="display: flex; justify-content: flex-start; align-items: flex-end;">
+                                <span><b>${m.name}</b>: ${messageTextToDisplay}</span>
+                                <span style="margin-left: 10px;">${messageTime}</span>
+                            </div>
+                           </div>`;
           }
           messagesDiv.innerHTML += messageHtml;
         });
@@ -534,20 +567,19 @@ button:hover {
           messagesDiv.scrollTop = oldScrollTop + (newScrollHeight - oldScrollHeight);
         }
 
-        // 새로운 클릭 핸들러 (메뉴 띄우기)
         messagesDiv.querySelectorAll('.msg').forEach(messageElement => {
           messageElement.onclick = function(event) {
             event.stopPropagation();
             const messageUid = this.getAttribute('data-uid');
             const messageDocId = this.getAttribute('data-docid');
-            const messageText = this.getAttribute('data-messagetext'); // 저장된 원본 텍스트 사용
+            const messageText = this.getAttribute('data-messagetext');
             const isSystemMessage = this.classList.contains('system-message');
             
             openContextMenu(messageDocId, messageUid, messageText, isSystemMessage);
           };
         });
       });
-  }
+}
 
   function send() {
     if (!currentUid) {
