@@ -694,92 +694,151 @@ input#text { /* 이 규칙은 이제 .message-input으로 대체되므로 사실
 
 
   // --- Firebase Firestore Listener ---
- function loadMessages() {
+// 메시지 ID를 기준으로 DOM 요소에 빠르게 접근하기 위한 맵
+const messageElementsMap = new Map();
+
+function loadMessages() {
     db.collection("messages")
-      .orderBy("time", "asc")
+      .orderBy("time", "asc") // 항상 정렬된 상태를 유지해야 docChanges가 잘 동작합니다.
       .onSnapshot(snapshot => {
         const isScrolledToBottom = messagesDiv.scrollTop < 20;
         const oldScrollHeight = messagesDiv.scrollHeight;
         const oldScrollTop = messagesDiv.scrollTop;
 
-        messagesDiv.innerHTML = "";
-        const allMessages = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        // docChanges를 사용하여 변경된 메시지만 처리
+        snapshot.docChanges().forEach(change => {
+            const message = { id: change.doc.id, ...change.doc.data() };
+            const docId = message.id;
+            const messageUid = message.uid;
+            const messageText = message.text; // 원본 메시지 텍스트
+            const isSystemMessage = message.isSystemMessage;
 
-        const filteredMessages = allMessages.filter(m => {
-            if (m.isSystemMessage) return true;
-            return !(m.hiddenForUids && m.hiddenForUids.includes(currentUid));
-        });
-
-        filteredMessages.reverse().forEach(m => {
-          const docId = m.id;
-          let messageTextToDisplay = m.text; // 기본적으로 메시지 텍스트를 표시
-          let messageTime = ''; // 메시지 시간을 저장할 변수
-
-          // Firestore Timestamp를 JavaScript Date 객체로 변환하고 시간 포맷
-          if (m.time && m.time.toDate) { // m.time이 Timestamp 객체인지 확인
-              const date = m.time.toDate();
-              let hours = date.getHours();
-              const minutes = date.getMinutes().toString().padStart(2, '0');
-              const ampm = hours >= 12 ? '오후' : '오전';
-              hours = hours % 12;
-              hours = hours ? hours : 12; // 0시는 12시로 표시
-              messageTime = `<span class="message-time">${ampm} ${hours}:${minutes}</span>`;
-          }
-
-
-          // --- 파일 첨부 메시지 처리 로직 추가 (기존과 동일) ---
-          if (m.fileUrl) { // fileUrl 필드가 존재하면
-            if (m.fileType && m.fileType.startsWith('image/')) { // 이미지 파일인 경우
-              messageTextToDisplay = `<img src="${m.fileUrl}" alt="${m.text}" style="max-width: 100%; height: auto; border-radius: 8px; margin-top: 10px;">`;
-            } else { // 이미지 외 다른 파일인 경우 (다운로드 링크)
-              messageTextToDisplay = `<a href="${m.fileUrl}" target="_blank" style="color: #38bdf8; text-decoration: underline;">${m.text} (파일 다운로드)</a>`;
+            // '나에게서 삭제'된 메시지는 처리하지 않음
+            if (message.hiddenForUids && message.hiddenForUids.includes(currentUid)) {
+                if (messageElementsMap.has(docId)) {
+                    messageElementsMap.get(docId).remove();
+                    messageElementsMap.delete(docId);
+                }
+                return; // 숨겨진 메시지는 여기서 처리 중단
             }
-          }
-          // --- 파일 첨부 메시지 처리 로직 끝 ---
-
-
-          let messageHtml;
-          if (m.isSystemMessage) {
-              messageHtml = `<div class="msg system-message" data-docid="${docId}" data-uid="${m.uid}" data-messagetext="${m.text}">${messageTextToDisplay}</div>`;
-          } else if (m.uid === currentUid) {
-            // 내 메시지: 시간과 이름+텍스트를 한 줄에 표시
-            messageHtml = `<div class="msg my-message" data-docid="${docId}" data-uid="${m.uid}" data-messagetext="${m.text}">
-                            <div style="display: flex; justify-content: flex-end; align-items: flex-end;">
-                                ${messageTime}
-                                <span style="margin-left: 10px;"><b>${m.name}</b>: ${messageTextToDisplay}</span>
-                            </div>
-                           </div>`;
-          } else {
-            // 다른 사람 메시지: 이름+텍스트와 시간을 한 줄에 표시
-            messageHtml = `<div class="msg" data-docid="${docId}" data-uid="${m.uid}" data-messagetext="${m.text}">
-                            <div style="display: flex; justify-content: flex-start; align-items: flex-end;">
-                                <span><b>${m.name}</b>: ${messageTextToDisplay}</span>
-                                <span style="margin-left: 10px;">${messageTime}</span>
-                            </div>
-                           </div>`;
-          }
-          messagesDiv.innerHTML += messageHtml;
-        });
-
-        const newScrollHeight = messagesDiv.scrollHeight;
-
-        if (isScrolledToBottom) {
-          messagesDiv.scrollTop = 0;
-        } else {
-          messagesDiv.scrollTop = oldScrollTop + (newScrollHeight - oldScrollHeight);
-        }
-
-        messagesDiv.querySelectorAll('.msg').forEach(messageElement => {
-          messageElement.onclick = function(event) {
-            event.stopPropagation();
-            const messageUid = this.getAttribute('data-uid');
-            const messageDocId = this.getAttribute('data-docid');
-            const messageText = this.getAttribute('data-messagetext');
-            const isSystemMessage = this.classList.contains('system-message');
             
-            openContextMenu(messageDocId, messageUid, messageText, isSystemMessage);
-          };
+            let messageHtmlContent; // 메시지 내용 (텍스트, 이미지, 파일)
+            let messageTimeHtml = ''; // 메시지 시간 HTML
+
+            // 시간 포맷
+            if (message.time && message.time.toDate) {
+                const date = message.time.toDate();
+                let hours = date.getHours();
+                const minutes = date.getMinutes().toString().padStart(2, '0');
+                const ampm = hours >= 12 ? '오후' : '오전';
+                hours = hours % 12;
+                hours = hours ? hours : 12;
+                messageTimeHtml = `<span class="message-time">${ampm} ${hours}:${minutes}</span>`;
+            }
+
+            // 파일 첨부 메시지 처리
+            if (message.fileUrl) {
+                if (message.fileType && message.fileType.startsWith('image/')) {
+                    messageHtmlContent = `<img src="${message.fileUrl}" alt="${message.text}" style="max-width: 100%; height: auto; border-radius: 8px; margin-top: 10px;">`;
+                } else if (message.fileType && message.fileType.startsWith('video/')) {
+                    messageHtmlContent = `<video controls src="${message.fileUrl}" style="max-width: 100%; height: auto; border-radius: 8px; margin-top: 10px;">Your browser does not support the video tag.</video>`;
+                } else if (message.fileType && message.fileType.startsWith('audio/')) {
+                    messageHtmlContent = `<audio controls src="${message.fileUrl}" style="width: 100%; margin-top: 10px;">Your browser does not support the audio tag.</audio>`;
+                } else {
+                    messageHtmlContent = `<a href="${message.fileUrl}" target="_blank" style="color: #38bdf8; text-decoration: underline;">${message.text} (파일 다운로드)</a>`;
+                }
+            } else {
+                messageHtmlContent = message.text;
+            }
+
+            let messageElement;
+
+            if (change.type === "added") {
+                messageElement = document.createElement('div');
+                messageElement.setAttribute('data-docid', docId);
+                messageElement.setAttribute('data-uid', messageUid);
+                messageElement.setAttribute('data-messagetext', messageText); // 원본 텍스트 저장
+                messageElement.classList.add('msg');
+                if (isSystemMessage) {
+                    messageElement.classList.add('system-message');
+                } else if (messageUid === currentUid) {
+                    messageElement.classList.add('my-message');
+                }
+                
+                // 메시지 HTML 구조 생성
+                if (isSystemMessage) {
+                    messageElement.innerHTML = messageHtmlContent;
+                } else if (messageUid === currentUid) {
+                    messageElement.innerHTML = `
+                        <div style="display: flex; justify-content: flex-end; align-items: flex-end;">
+                            ${messageTimeHtml}
+                            <span style="margin-left: 10px;"><b>${message.name}</b>: ${messageHtmlContent}</span>
+                        </div>`;
+                } else {
+                    messageElement.innerHTML = `
+                        <div style="display: flex; justify-content: flex-start; align-items: flex-end;">
+                            <span><b>${message.name}</b>: ${messageHtmlContent}</span>
+                            <span style="margin-left: 10px;">${messageTimeHtml}</span>
+                        </div>`;
+                }
+
+                // 메시지 클릭 이벤트 리스너 추가
+                messageElement.onclick = function(event) {
+                    event.stopPropagation();
+                    openContextMenu(
+                        this.getAttribute('data-docid'),
+                        this.getAttribute('data-uid'),
+                        this.getAttribute('data-messagetext'),
+                        this.classList.contains('system-message')
+                    );
+                };
+
+                // 새로운 메시지는 보통 가장 최근 메시지이므로 messagesDiv의 맨 위에 추가 (reversed order)
+                messagesDiv.prepend(messageElement);
+                messageElementsMap.set(docId, messageElement);
+
+            } else if (change.type === "modified") {
+                messageElement = messageElementsMap.get(docId);
+                if (messageElement) {
+                    // 메시지 내용 업데이트
+                    if (isSystemMessage) {
+                        messageElement.innerHTML = messageHtmlContent;
+                    } else if (messageUid === currentUid) {
+                        messageElement.innerHTML = `
+                            <div style="display: flex; justify-content: flex-end; align-items: flex-end;">
+                                ${messageTimeHtml}
+                                <span style="margin-left: 10px;"><b>${message.name}</b>: ${messageHtmlContent}</span>
+                            </div>`;
+                    } else {
+                        messageElement.innerHTML = `
+                            <div style="display: flex; justify-content: flex-start; align-items: flex-end;">
+                                <span><b>${message.name}</b>: ${messageHtmlContent}</span>
+                                <span style="margin-left: 10px;">${messageTimeHtml}</span>
+                            </div>`;
+                    }
+                    messageElement.setAttribute('data-messagetext', messageText); // 원본 텍스트 업데이트
+                    // classList도 필요하면 업데이트
+                }
+            } else if (change.type === "removed") {
+                messageElement = messageElementsMap.get(docId);
+                if (messageElement) {
+                    messageElement.remove();
+                    messageElementsMap.delete(docId);
+                }
+            }
         });
+
+        // 스크롤 위치 조정 로직은 변경된 방식으로 수정
+        if (isScrolledToBottom) {
+            messagesDiv.scrollTop = 0; // 항상 맨 아래 (최신 메시지)로 스크롤
+        } else {
+            // 새 메시지가 추가되었을 때 스크롤을 유지하기 위한 로직 (옵션)
+            // 새로운 메시지가 추가된 경우, 기존 스크롤 위치를 유지하고 싶다면,
+            // messagesDiv.scrollTop += (messagesDiv.scrollHeight - oldScrollHeight);
+            // 와 같이 사용할 수 있지만, prepend 방식으로 추가되므로 복잡해질 수 있습니다.
+            // 일단은 새로운 메시지가 추가되어도 스크롤을 유지하지 않고 (새 메시지가 위로 올라옴),
+            // 사용자가 수동으로 위로 스크롤해야 이전 메시지를 볼 수 있도록 할 수도 있습니다.
+        }
       });
 }
  // ==== handleFileUpload 함수 시작 ====
