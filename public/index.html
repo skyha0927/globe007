@@ -11,7 +11,6 @@
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-storage-compat.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/uuid/8.3.2/uuid.min.js"></script>
 
-<style>
 /* Reset and base styles */
 html, body {
   height: 100%;
@@ -34,55 +33,78 @@ html, body {
   border-radius: 12px;
   box-shadow: 0 0 25px rgba(0,0,0,0.6);
   box-sizing: border-box;
-  font-size: 3rem; /* 데스크톱 기본 UI 글꼴 크기 대폭 상향 조정 */
+  font-size: 3rem;
 }
 
 /* Header and Footer styles */
 .chat-header, .chat-footer {
   flex-shrink: 0;
-  padding: 60px 80px; /* 내부 여백 대폭 증가 */
+  padding: 60px 80px;
   background: #020617;
   border-bottom: 1px solid #1e293b;
 }
 .chat-footer {
   border-top: 1px solid #1e293b;
   border-bottom: none;
-  padding-top: 50px; /* 푸터 상단 패딩 증가 */
-  padding-bottom: 60px; /* 푸터 하단 패딩 증가 */
+  padding-top: 50px;
+  padding-bottom: 60px;
+  display: flex; /* flex 컨테이너로 만듭니다 */
+  align-items: center; /* 항목들을 세로 중앙에 정렬 */
+  gap: 30px; /* 항목들 사이의 간격 */
 }
 
 /* Input and Button styles */
-input, button {
-  width: 100%;
-  padding: 40px; /* 패딩 대폭 증가 */
+/* 일반 input 스타일 (헤더의 이름 입력칸 등) */
+input {
+  padding: 40px;
   border-radius: 20px;
   border: 1px solid #1e293b;
   background-color: #0f172a;
   color: white;
-  font-size: 2.5rem; /* 글꼴 크기 증가 */
+  font-size: 2.5rem;
   box-sizing: border-box;
-  min-height: 120px; /* 최소 높이 대폭 증가 */
+  min-height: 120px;
 }
 input#name {
     margin-bottom: 0;
 }
-input#text {
-    margin-top: 0;
-    margin-bottom: 30px;
-}
 input::placeholder {
     color: #94a3b8;
 }
-button {
-  background: #38bdf8;
-  cursor: pointer;
-  font-weight: bold;
-  transition: background-color 0.2s;
-  font-size: 2.8rem; /* 버튼 글꼴 크기 증가 */
-  margin-top: 0;
+
+/* 메시지 입력 필드 전용 스타일 */
+.message-input {
+  flex-grow: 1; /* 남은 공간을 input이 채우도록 */
+  margin: 0; /* flexbox가 간격을 처리하므로 기본 마진 제거 */
 }
-button:hover {
+
+/* 아이콘 버튼 공통 스타일 (파일 첨부, 전송 버튼) */
+.icon-button {
+  background: #38bdf8;
+  color: white;
+  border: none;
+  border-radius: 20px;
+  cursor: pointer;
+  font-size: 2.8rem;
+  width: 120px;
+  min-width: 120px;
+  height: 120px;
+  min-height: 120px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  transition: background-color 0.2s;
+  flex-shrink: 0;
+  padding: 0;
+}
+.icon-button:hover {
   background: #0ea5e9;
+}
+.file-attach-button {
+  background: #60a5fa; /* 파란색 계열로 구분 */
+}
+.file-attach-button:hover {
+  background: #3b82f6;
 }
 
 /* Messages area */
@@ -92,9 +114,9 @@ button:hover {
   padding: 50px 80px;
   word-wrap: break-word;
   line-height: 1.7;
-  font-size: 2.2rem; /* 메시지 글꼴 크기 증가 */
+  font-size: 2.2rem;
   display: flex;
-  flex-direction: column-reverse;
+  flex-direction: column-reverse; /* 최신 메시지가 아래로 오도록 (기존 코드 기준) */
   justify-content: flex-start;
 }
 
@@ -111,24 +133,60 @@ button:hover {
 .msg:first-child {
   margin-top: 0;
 }
-.msg:hover {
-  background-color: #3f4d62;
+
+/* 메시지 내용과 시간을 감싸는 flex 컨테이너 */
+.message-content-wrapper {
+    display: flex;
+    align-items: flex-end; /* 텍스트 하단에 정렬 */
+    width: 100%;
 }
+.my-message .message-content-wrapper { /* 내 메시지는 오른쪽 정렬 */
+    justify-content: flex-end;
+    margin-left: auto; /* 오른쪽에 붙도록 */
+    max-width: 85%; /* 말풍선 너비 제한 */
+}
+.msg:not(.my-message) .message-content-wrapper { /* 다른 사람 메시지는 왼쪽 정렬 */
+    justify-content: flex-start;
+    margin-right: auto; /* 왼쪽에 붙도록 */
+    max-width: 85%; /* 말풍선 너비 제한 */
+}
+
+
 .my-message {
   font-weight: bold;
   color: #a7f3d0;
   background-color: #1a4d33;
-  text-align: right;
-  margin-left: auto;
-  max-width: 85%;
+  text-align: right; /* 텍스트 자체를 오른쪽 정렬 (말풍선 내부 텍스트용) */
   border-bottom-right-radius: 0;
-}
-.my-message b {
-  color: #a7f3d0;
+  /* margin-left: auto; 와 max-width는 이제 .message-content-wrapper에서 처리 */
 }
 .msg b {
   color: #38bdf8;
 }
+.my-message b { /* 내 메시지의 이름 색상 */
+  color: #a7f3d0;
+}
+
+
+/* 메시지 시간 스타일 */
+.message-time {
+  font-size: 1.4rem; /* 시간 글꼴 크기 */
+  color: #94a3b8; /* 약간 연한 색상 */
+  flex-shrink: 0; /* 내용이 줄어들 때 시간이 먼저 줄어들지 않도록 */
+  white-space: nowrap; /* 시간이 한 줄에 표시되도록 */
+  margin-left: 10px; /* 메시지 본문과 시간 사이 간격 (기본은 오른쪽에 붙음) */
+}
+.my-message .message-time { /* 내 메시지의 시간은 왼쪽으로 이동 (order: -1과 함께) */
+  order: -1; /* 내 메시지에서는 시간을 메시지 본문 앞에 배치 */
+  margin-right: 10px; /* 내 메시지의 경우 시간과 본문 사이 오른쪽 간격 */
+  margin-left: 0; /* 기본 margin-left 제거 */
+}
+
+/* 메시지 본문 (이름: 텍스트 또는 파일) */
+.message-body {
+    /* flex-grow: 1; */ /* 필요에 따라 적용, 텍스트가 길 때만 유용 */
+}
+
 
 /* System messages */
 .system-message {
@@ -144,6 +202,10 @@ button:hover {
   font-size: 1.8rem;
   cursor: default;
 }
+.system-message .message-time { /* 시스템 메시지는 시간 표시 안 함 */
+    display: none;
+}
+
 
 /* Message interaction menu */
 .message-context-menu {
@@ -155,16 +217,16 @@ button:hover {
   border-radius: 20px;
   box-shadow: 0 5px 15px rgba(0,0,0,0.5);
   z-index: 1001;
-  display: none; /* Hidden by default */
+  display: none;
   flex-direction: column;
-  padding: 40px; /* 메뉴 패딩 확대 */
-  gap: 25px; /* 버튼 간격 확대 */
-  min-width: 500px; /* 메뉴 최소 너비 확대 */
+  padding: 40px;
+  gap: 25px;
+  min-width: 500px;
 }
 .context-menu-button {
   width: 100%;
-  padding: 40px; /* 버튼 패딩 확대 */
-  font-size: 2.8rem; /* 버튼 글꼴 크기 확대 */
+  padding: 40px;
+  font-size: 2.8rem;
   border-radius: 15px;
   background-color: #38bdf8;
   color: white;
@@ -175,7 +237,7 @@ button:hover {
 .context-menu-button:hover {
   background-color: #0ea5e9;
 }
-.context-menu-button.delete-all { /* 모두에게서 삭제 버튼은 빨간색 */
+.context-menu-button.delete-all {
   background-color: #dc2626;
 }
 .context-menu-button.delete-all:hover {
@@ -191,190 +253,7 @@ button:hover {
   z-index: 1000;
   display: none;
 }
-/* Messages area */
-#messages {
-  /* ... 기존 스타일 ... */
-}
 
-/* Individual message style */
-.msg {
-  /* ... 기존 스타일 ... */
-}
-
-.my-message {
-  /* ... 기존 스타일 ... */
-}
-
-.msg b {
-  /* ... 기존 스타일 ... */
-}
-
-/* 메시지 시간 스타일 */
-.message-time {
-  font-size: 1.4rem; /* 시간 글꼴 크기 */
-  color: #94a3b8; /* 약간 연한 색상 */
-  flex-shrink: 0; /* 내용이 줄어들 때 시간이 먼저 줄어들지 않도록 */
-  white-space: nowrap; /* 시간이 한 줄에 표시되도록 */
-}
-
-/* 내 메시지의 시간 */
-.my-message .message-time {
-  order: -1; /* 내 메시지에서는 시간을 이름/텍스트 앞에 배치 (CSS flexbox order 사용) */
-}
-
-/* flexbox를 사용하여 이름/텍스트와 시간을 같은 줄에 정렬 */
-.msg > div {
-    display: flex;
-    align-items: flex-end; /* 텍스트 하단에 정렬 */
-    width: 100%;
-}
-.my-message > div {
-    justify-content: flex-end; /* 내 메시지는 오른쪽 정렬 */
-}
-.msg:not(.my-message) > div {
-    justify-content: flex-start; /* 다른 사람 메시지는 왼쪽 정렬 */
-}
-
-/* 시스템 메시지는 시간 표시 안 함 (선택 사항) */
-.system-message .message-time {
-    display: none;
-}
-/* Reset and base styles */
-/* ... (기존 스타일은 그대로 유지) ... */
-
-/* Input and Button styles - 기존 rule을 수정합니다 */
-/* 이제 input과 button에 각각 필요한 스타일만 적용하고, 공통 스타일은 class로 분리합니다 */
-
-/* 기존 input, button 규칙을 더 세분화 */
-input {
-  width: 100%; /* input은 너비를 꽉 채우도록 */
-  padding: 40px; /* 기존 패딩 유지 */
-  border-radius: 20px;
-  border: 1px solid #1e293b;
-  background-color: #0f172a;
-  color: white;
-  font-size: 2.5rem; /* 글꼴 크기 유지 */
-  box-sizing: border-box;
-  min-height: 120px; /* 최소 높이 유지 */
-}
-
-/* icon-button 공통 스타일 (파일 첨부, 전송 버튼) */
-.icon-button {
-  background: #38bdf8; /* 전송 버튼 색상 */
-  color: white;
-  border: none;
-  border-radius: 20px; /* input과 비슷하게 둥글게 */
-  cursor: pointer;
-  font-size: 2.8rem; /* 아이콘 크기 */
-  width: 120px; /* 버튼 고정 너비 */
-  min-width: 120px;
-  height: 120px; /* 버튼 고정 높이 - input의 min-height와 비슷하게 */
-  min-height: 120px;
-  display: flex; /* flex를 사용하여 아이콘을 중앙에 배치 */
-  justify-content: center;
-  align-items: center;
-  transition: background-color 0.2s;
-  flex-shrink: 0; /* 버튼이 줄어들지 않도록 */
-  padding: 0; /* 기본 패딩 제거 */
-}
-
-.icon-button:hover {
-  background: #0ea5e9;
-}
-
-/* 파일 첨부 버튼 개별 스타일 */
-.file-attach-button {
-  background: #60a5fa; /* 파란색 계열로 구분 */
-}
-.file-attach-button:hover {
-  background: #3b82f6;
-}
-
-/* message-input 스타일 */
-.chat-footer .message-input {
-  flex-grow: 1; /* 남은 공간을 input이 채우도록 */
-  margin: 0; /* flexbox가 간격을 처리하므로 기본 마진 제거 */
-}
-
-/* 기존 input#name, input#text, button 규칙에서 충돌 제거 및 정리 */
-input#name { /* 이 규칙은 header에 있는 input에만 적용 */
-    margin-bottom: 0;
-}
-input#text { /* 이 규칙은 이제 .message-input으로 대체되므로 사실상 필요 없음 */
-    /* margin-top: 0; */
-    /* margin-bottom: 30px; */
-}
-/* footer 내 button에 대한 마진 규칙 제거 (flexbox gap으로 대체) */
-.chat-footer button {
-    margin-top: 0 !important; /* HTML에 직접 추가한 style이 있다면 !important로 재정의 */
-    margin-bottom: 0 !important;
-}
-
-
-/* Header and Footer styles - chat-footer 수정 */
-.chat-header, .chat-footer {
-  flex-shrink: 0;
-  padding: 60px 80px; /* 내부 여백 유지 */
-  background: #020617;
-  border-bottom: 1px solid #1e293b;
-}
-.chat-footer {
-  border-top: 1px solid #1e293b;
-  border-bottom: none;
-  padding-top: 50px; /* 푸터 상단 패딩 유지 */
-  padding-bottom: 60px; /* 푸터 하단 패딩 유지 */
-  display: flex; /* flex 컨테이너로 만듭니다 */
-  align-items: center; /* 항목들을 세로 중앙에 정렬 */
-  gap: 30px; /* 항목들 사이의 간격 */
-}
-
-
-/* Mobile optimization (smartphones portrait mode) - 기존 rule을 수정합니다 */
-@media (max-width: 768px) {
-  .app {
-    /* ... 기존 스타일 ... */
-  }
-  .chat-header, .chat-footer, #messages {
-    padding-left: 60px;
-    padding-right: 60px;
-  }
-  .chat-header {
-      /* ... 기존 스타일 ... */
-  }
-  .chat-footer {
-      padding-top: 35px; /* 모바일 푸터 패딩 조정 */
-      padding-bottom: 50px; /* 모바일 푸터 패딩 조정 */
-      gap: 20px; /* 모바일 항목 간격 */
-  }
-
-  /* 모바일용 input, button 규칙 조정 */
-  input { /* input은 기존 min-height 유지 */
-    font-size: 2.8rem;
-    padding: 45px;
-    min-height: 150px;
-  }
-  .icon-button { /* 아이콘 버튼은 모바일에서도 비슷한 비율 유지 */
-    width: 100px;
-    min-width: 100px;
-    height: 100px;
-    min-height: 100px;
-    font-size: 3rem; /* 모바일 버튼 글꼴 크기 */
-  }
-  /* chat-footer .message-input은 input rule 따름 */
-
-  #messages {
-    /* ... 기존 스타일 ... */
-  }
-  .msg {
-    /* ... 기존 스타일 ... */
-  }
-  .system-message {
-      /* ... 기존 스타일 ... */
-  }
-
-  /* ... 나머지 모바일 메뉴 조정 스타일 ... */
-}
-/* ... 나머지 스타일 ... */
 
 /* Mobile optimization (smartphones portrait mode) */
 @media (max-width: 768px) {
@@ -394,13 +273,20 @@ input#text { /* 이 규칙은 이제 .message-input으로 대체되므로 사실
   .chat-footer {
       padding-top: 35px;
       padding-bottom: 50px;
+      gap: 20px; /* 모바일 항목 간격 */
   }
-  input, button {
+
+  /* 모바일용 input, button 규칙 조정 */
+  input {
     font-size: 2.8rem;
     padding: 45px;
     min-height: 150px;
   }
-  button {
+  .icon-button {
+    width: 100px;
+    min-width: 100px;
+    height: 100px;
+    min-height: 100px;
     font-size: 3rem;
   }
   #messages {
@@ -419,13 +305,13 @@ input#text { /* 이 규칙은 이제 .message-input으로 대체되므로 사실
 
   /* Mobile menu adjustments */
   .message-context-menu {
-    min-width: 90%; /* 화면 너비의 대부분 차지 */
-    padding: 50px; /* 모바일 메뉴 패딩 확대 */
-    gap: 30px; /* 모바일 버튼 간격 확대 */
+    min-width: 90%;
+    padding: 50px;
+    gap: 30px;
   }
   .context-menu-button {
-    padding: 45px; /* 모바일 버튼 패딩 확대 */
-    font-size: 3rem; /* 모바일 버튼 글꼴 크기 확대 */
+    padding: 45px;
+    font-size: 3rem;
   }
 }
 </style>
@@ -765,20 +651,20 @@ function loadMessages() {
                     messageElement.classList.add('my-message');
                 }
                 
-                // 메시지 HTML 구조 생성
+                // 메시지 HTML 구조 생성 - 인라인 flex 스타일 제거, CSS 클래스에 맡김
                 if (isSystemMessage) {
                     messageElement.innerHTML = messageHtmlContent;
-                } else if (messageUid === currentUid) {
+                } else if (messageUid === currentUid) { // 내 메시지
                     messageElement.innerHTML = `
-                        <div style="display: flex; justify-content: flex-end; align-items: flex-end;">
+                        <div class="message-content-wrapper">
                             ${messageTimeHtml}
-                            <span style="margin-left: 10px;"><b>${message.name}</b>: ${messageHtmlContent}</span>
+                            <span class="message-body"><b>${message.name}</b>: ${messageHtmlContent}</span>
                         </div>`;
-                } else {
+                } else { // 다른 사람 메시지
                     messageElement.innerHTML = `
-                        <div style="display: flex; justify-content: flex-start; align-items: flex-end;">
-                            <span><b>${message.name}</b>: ${messageHtmlContent}</span>
-                            <span style="margin-left: 10px;">${messageTimeHtml}</span>
+                        <div class="message-content-wrapper">
+                            <span class="message-body"><b>${message.name}</b>: ${messageHtmlContent}</span>
+                            ${messageTimeHtml}
                         </div>`;
                 }
 
@@ -800,24 +686,23 @@ function loadMessages() {
             } else if (change.type === "modified") {
                 messageElement = messageElementsMap.get(docId);
                 if (messageElement) {
-                    // 메시지 내용 업데이트
+                    // 메시지 내용 업데이트 - 인라인 flex 스타일 제거, CSS 클래스에 맡김
                     if (isSystemMessage) {
                         messageElement.innerHTML = messageHtmlContent;
-                    } else if (messageUid === currentUid) {
+                    } else if (messageUid === currentUid) { // 내 메시지
                         messageElement.innerHTML = `
-                            <div style="display: flex; justify-content: flex-end; align-items: flex-end;">
+                            <div class="message-content-wrapper">
                                 ${messageTimeHtml}
-                                <span style="margin-left: 10px;"><b>${message.name}</b>: ${messageHtmlContent}</span>
+                                <span class="message-body"><b>${message.name}</b>: ${messageHtmlContent}</span>
                             </div>`;
-                    } else {
+                    } else { // 다른 사람 메시지
                         messageElement.innerHTML = `
-                            <div style="display: flex; justify-content: flex-start; align-items: flex-end;">
-                                <span><b>${message.name}</b>: ${messageHtmlContent}</span>
-                                <span style="margin-left: 10px;">${messageTimeHtml}</span>
+                            <div class="message-content-wrapper">
+                                <span class="message-body"><b>${message.name}</b>: ${messageHtmlContent}</span>
+                                ${messageTimeHtml}
                             </div>`;
                     }
                     messageElement.setAttribute('data-messagetext', messageText); // 원본 텍스트 업데이트
-                    // classList도 필요하면 업데이트
                 }
             } else if (change.type === "removed") {
                 messageElement = messageElementsMap.get(docId);
@@ -828,19 +713,14 @@ function loadMessages() {
             }
         });
 
-        // 스크롤 위치 조정 로직은 변경된 방식으로 수정
+        // 스크롤 위치 조정 로직 (맨 위로 스크롤)
         if (isScrolledToBottom) {
-            messagesDiv.scrollTop = 0; // 항상 맨 아래 (최신 메시지)로 스크롤
-        } else {
-            // 새 메시지가 추가되었을 때 스크롤을 유지하기 위한 로직 (옵션)
-            // 새로운 메시지가 추가된 경우, 기존 스크롤 위치를 유지하고 싶다면,
-            // messagesDiv.scrollTop += (messagesDiv.scrollHeight - oldScrollHeight);
-            // 와 같이 사용할 수 있지만, prepend 방식으로 추가되므로 복잡해질 수 있습니다.
-            // 일단은 새로운 메시지가 추가되어도 스크롤을 유지하지 않고 (새 메시지가 위로 올라옴),
-            // 사용자가 수동으로 위로 스크롤해야 이전 메시지를 볼 수 있도록 할 수도 있습니다.
+            messagesDiv.scrollTop = 0;
         }
       });
 }
+
+    
  // ==== handleFileUpload 함수 시작 ====
   async function handleFileUpload(event) {
       if (!currentUid) {
