@@ -55,7 +55,7 @@ html, body {
 }
 
 /* Input and Button styles */
-/* 일반 input 스타일 (헤더의 이름 입력칸 등) */
+/* 모든 input에 공통적으로 적용되는 기본 스타일 (width: 100% 제거) */
 input {
   padding: 40px;
   border-radius: 20px;
@@ -66,8 +66,10 @@ input {
   box-sizing: border-box;
   min-height: 120px;
 }
+/* 헤더의 이름 입력칸 (#name)에만 width: 100% 적용 */
 input#name {
     margin-bottom: 0;
+    width: 100%; /* 이 부분에만 width: 100% 적용 */
 }
 input::placeholder {
     color: #94a3b8;
@@ -77,6 +79,7 @@ input::placeholder {
 .message-input {
   flex-grow: 1; /* 남은 공간을 input이 채우도록 */
   margin: 0; /* flexbox가 간격을 처리하므로 기본 마진 제거 */
+  /* 여기에 width: 100%를 넣지 않아야 flex-grow와 충돌하지 않습니다. */
 }
 
 /* 아이콘 버튼 공통 스타일 (파일 첨부, 전송 버튼) */
@@ -95,7 +98,7 @@ input::placeholder {
   justify-content: center;
   align-items: center;
   transition: background-color 0.2s;
-  flex-shrink: 0;
+  flex-shrink: 0; /* 버튼이 줄어들지 않도록 */
   padding: 0;
 }
 .icon-button:hover {
@@ -108,6 +111,7 @@ input::placeholder {
   background: #3b82f6;
 }
 
+
 /* Messages area */
 #messages {
   flex-grow: 1;
@@ -117,7 +121,7 @@ input::placeholder {
   line-height: 1.7;
   font-size: 2.2rem;
   display: flex;
-  flex-direction: column-reverse; /* 최신 메시지가 아래로 오도록 (기존 코드 기준) */
+  flex-direction: column-reverse;
   justify-content: flex-start;
 }
 
@@ -159,7 +163,6 @@ input::placeholder {
   background-color: #1a4d33;
   text-align: right; /* 텍스트 자체를 오른쪽 정렬 (말풍선 내부 텍스트용) */
   border-bottom-right-radius: 0;
-  /* margin-left: auto; 와 max-width는 이제 .message-content-wrapper에서 처리 */
 }
 .msg b {
   color: #38bdf8;
@@ -171,23 +174,17 @@ input::placeholder {
 
 /* 메시지 시간 스타일 */
 .message-time {
-  font-size: 1.4rem; /* 시간 글꼴 크기 */
-  color: #94a3b8; /* 약간 연한 색상 */
-  flex-shrink: 0; /* 내용이 줄어들 때 시간이 먼저 줄어들지 않도록 */
-  white-space: nowrap; /* 시간이 한 줄에 표시되도록 */
+  font-size: 1.4rem;
+  color: #94a3b8;
+  flex-shrink: 0;
+  white-space: nowrap;
   margin-left: 10px; /* 메시지 본문과 시간 사이 간격 (기본은 오른쪽에 붙음) */
 }
-.my-message .message-time { /* 내 메시지의 시간은 왼쪽으로 이동 (order: -1과 함께) */
-  order: -1; /* 내 메시지에서는 시간을 메시지 본문 앞에 배치 */
+.my-message .message-time {
+  order: -1;
   margin-right: 10px; /* 내 메시지의 경우 시간과 본문 사이 오른쪽 간격 */
   margin-left: 0; /* 기본 margin-left 제거 */
 }
-
-/* 메시지 본문 (이름: 텍스트 또는 파일) */
-.message-body {
-    /* flex-grow: 1; */ /* 필요에 따라 적용, 텍스트가 길 때만 유용 */
-}
-
 
 /* System messages */
 .system-message {
@@ -203,7 +200,7 @@ input::placeholder {
   font-size: 1.8rem;
   cursor: default;
 }
-.system-message .message-time { /* 시스템 메시지는 시간 표시 안 함 */
+.system-message .message-time {
     display: none;
 }
 
@@ -278,12 +275,15 @@ input::placeholder {
   }
 
   /* 모바일용 input, button 규칙 조정 */
-  input {
+  input { /* 기본 input 스타일, width: 100% 없음 */
     font-size: 2.8rem;
     padding: 45px;
     min-height: 150px;
   }
-  .icon-button {
+  input#name { /* 모바일 헤더 이름 입력칸은 100% */
+    width: 100%;
+  }
+  .icon-button { /* 아이콘 버튼은 모바일에서도 비슷한 비율 유지 */
     width: 100px;
     min-width: 100px;
     height: 100px;
@@ -302,17 +302,6 @@ input::placeholder {
   .system-message {
       font-size: 2.2rem;
       padding: 25px 35px;
-  }
-
-  /* Mobile menu adjustments */
-  .message-context-menu {
-    min-width: 90%;
-    padding: 50px;
-    gap: 30px;
-  }
-  .context-menu-button {
-    padding: 45px;
-    font-size: 3rem;
   }
 }
 </style>
