@@ -190,7 +190,56 @@ button:hover {
   z-index: 1000;
   display: none;
 }
+/* Messages area */
+#messages {
+  /* ... 기존 스타일 ... */
+}
 
+/* Individual message style */
+.msg {
+  /* ... 기존 스타일 ... */
+}
+
+.my-message {
+  /* ... 기존 스타일 ... */
+}
+
+.msg b {
+  /* ... 기존 스타일 ... */
+}
+
+/* 메시지 시간 스타일 */
+.message-time {
+  font-size: 1.4rem; /* 시간 글꼴 크기 */
+  color: #94a3b8; /* 약간 연한 색상 */
+  flex-shrink: 0; /* 내용이 줄어들 때 시간이 먼저 줄어들지 않도록 */
+  white-space: nowrap; /* 시간이 한 줄에 표시되도록 */
+}
+
+/* 내 메시지의 시간 */
+.my-message .message-time {
+  order: -1; /* 내 메시지에서는 시간을 이름/텍스트 앞에 배치 (CSS flexbox order 사용) */
+}
+
+/* flexbox를 사용하여 이름/텍스트와 시간을 같은 줄에 정렬 */
+.msg > div {
+    display: flex;
+    align-items: flex-end; /* 텍스트 하단에 정렬 */
+    width: 100%;
+}
+.my-message > div {
+    justify-content: flex-end; /* 내 메시지는 오른쪽 정렬 */
+}
+.msg:not(.my-message) > div {
+    justify-content: flex-start; /* 다른 사람 메시지는 왼쪽 정렬 */
+}
+
+/* 시스템 메시지는 시간 표시 안 함 (선택 사항) */
+.system-message .message-time {
+    display: none;
+}
+
+/* ... 나머지 스타일 ... */
 
 /* Mobile optimization (smartphones portrait mode) */
 @media (max-width: 768px) {
